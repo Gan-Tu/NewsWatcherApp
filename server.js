@@ -40,3 +40,51 @@ const PORT = process.env.PORT || 3000;
 // instead of IPs of Nginx load balancers for AWS Elastic Beanstalk
 app.enable('trust proxy');
 
+
+/** Middleware */
+
+// apply rate limits to all requests to avoid DOS/DDOS related attacks
+var limiter = new RateLimit({
+    windowsMs: 15*50*1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    delayMs: 0 // disable delaying - full speed until the max limit
+});
+app.use(limiter);
+
+// HTTP application hack mitigations
+app.use(helmet());
+
+// prevent unknown resources from being injected into the application
+app.use(csp({
+    directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc:  [
+                     "'self'",
+                     "'unsafe-inline'",
+                     'ajax.googleapis.com',
+                     'maxcdn.bootstrapcdn.com'
+                    ],
+        styleSrc:   ["'self'",
+                     "'unsafe-inline'",
+                     'maxcdn.bootstrapcdn.com'
+                    ],
+        fontSrc:    ["'self'",
+                     'maxcdn.bootstrapcdn.com'
+                    ],
+        imgSrc:     ['*']
+    }
+}));
+
+// add an X-Response-Time header to responses for performance logging
+app.use(responseTime());
+
+// log all HTTP requests
+app.use(logger('dev'));
+
+// parse JSON body of requests and make it available under `res.body`
+// limit body to 100KB to avoid DOS/DDOS related attacks
+app.use(bodyParser.json({ limit: '100kb' }));
+
+// serve static content from `build` directory
+app.use(express.static(path.join(__dirname, 'build')));
+
