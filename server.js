@@ -27,3 +27,16 @@ var users = require('./routes/users');
 var session = require('./routes/session');
 var sharedNews = require('./routes/sharedNews');
 var homeNews = require('./routes/homeNews');
+
+
+
+/** Express Application Settings */
+
+// set up the Express app
+var app = express();
+const PORT = process.env.PORT || 3000;
+
+// header requests should include the IP of actual machine,
+// instead of IPs of Nginx load balancers for AWS Elastic Beanstalk
+app.enable('trust proxy');
+
