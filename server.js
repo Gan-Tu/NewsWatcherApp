@@ -88,3 +88,26 @@ app.use(bodyParser.json({ limit: '100kb' }));
 // serve static content from `build` directory
 app.use(express.static(path.join(__dirname, 'build')));
 
+
+
+
+/** Background Processes */
+
+// fire up a child process in a separate core to do background processing
+// that is more intensive, so we free up the main Node process thread
+var node2 = cp.fork('./worker/app_FORK.js')
+
+// restart child process on crash
+node2.on('exit', function(code) {
+    console.log("[ERROR] Worker crashed with exit code: %d", code);
+    node2 = undefined;
+    // don't restart if this was a mocha test run.
+    if (!server.testrun) {
+        console.log('[INFO] Trying to restart worker...');
+        node2 = cp.fork('./worker/app_FORK.js');
+        console.log('[INFO] Worker restarted successfully.');
+    }
+});
+
+
+
