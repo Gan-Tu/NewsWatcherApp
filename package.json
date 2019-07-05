@@ -1,0 +1,21 @@
+{
+  "name": "NewsWatcher",
+  "version": "0.0.0",
+  "description": "A simple news service where users can set up keywords to subscribe, filter, view, share, and comment on news stories. This project is developed as a part of the follow-along tutorial of a full-stack MERN book.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "news"
+  ],
+  "author": {
+    "name": "Gan Tu",
+    "email": "hello@tugan.io"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
