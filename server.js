@@ -99,15 +99,60 @@ var node2 = cp.fork('./worker/app_FORK.js')
 
 // restart child process on crash
 node2.on('exit', function(code) {
-    console.log("[ERROR] Worker crashed with exit code: %d", code);
+    console.log("[ERROR] Background worker crashed with exit code: %d", code);
     node2 = undefined;
     // don't restart if this was a mocha test run.
     if (!server.testrun) {
-        console.log('[INFO] Trying to restart worker...');
+        console.log('[INFO] Trying to restart background worker...');
         node2 = cp.fork('./worker/app_FORK.js');
-        console.log('[INFO] Worker restarted successfully.');
+        console.log('[INFO] ... Background worker restarted successfully.');
     }
 });
+
+
+/** Database Connection */
+
+var db = {};
+var MongoClient = require('mongodb').MongoClient;
+
+// connect to database
+MongoClient.connect(process.env.MONGODB_CONNECT_URL,
+                    function(err, client){
+    assert.equal(null, err);
+    console.log("[INFO] Successfully connected to MongoDB database.");
+    db.client = client;
+    db.collection = client.db('newswatcherdb').collection('newswatcherdb');
+});
+
+// gracefully close the database connections and kill background child process
+process.on('SIGINT', function () {
+    console.log('[INFO] Cleaning up before app termination.');
+    interrupt_cleanup();
+    process.exit(0);
+});
+
+process.on('SIGUSR2', function () {
+    console.log('[INFO] Cleaning up before app restart.');
+    interrupt_cleanup();
+    process.kill(process.pid, 'SIGUSR2');
+});
+
+function interrupt_cleanup() {
+    db.client.close();
+    console.log('[INFO] ... MongoDB connection gracefully closed.');
+    node2.kill();
+    console.log('[INFO] ... Background worker gracefully killed.');
+}
+
+// set the database connection for middleware usage
+app.use(function (req, res, next) {
+  req.db = db;
+  req.node2 = node2;
+  next();
+});
+
+
+
 
 
 
