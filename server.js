@@ -84,6 +84,7 @@ app.use(logger('dev'));
 // parse JSON body of requests and make it available under `res.body`
 // limit body to 100KB to avoid DOS/DDOS related attacks
 app.use(bodyParser.json({ limit: '100kb' }));
+app.use(bodyParser.urlencoded({ extended: true }))
 
 // serve static content from `build` directory
 app.use(express.static(path.join(__dirname, 'build')));
