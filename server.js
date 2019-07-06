@@ -19,7 +19,7 @@ var RateLimit = require('express-rate-limit'); // IP based rate limiter
 // import environment secrets
 if (process.env.PRODUCTION !== 'production') {
     // read secrets from '.env' file for local dev
-    require('dotenv').require();
+    require('dotenv').config();
 }
 
 // import custom route handlers
@@ -96,10 +96,14 @@ app.use(express.static(path.join(__dirname, 'build')));
 
 // fire up a child process in a separate core to do background processing
 // that is more intensive, so we free up the main Node process thread
+console.log('[INFO] Trying to start the background worker...');
 var node2 = cp.fork('./worker/app_FORK.js')
+console.log('[INFO] Started background worker successfully.');
 
 // restart child process on crash
-node2.on('exit', function(code) {
+node2.on('exit', restartWorker);
+
+function restartWorker(code) {
     console.log("[ERROR] Background worker crashed with exit code: %d", code);
     node2 = undefined;
     // don't restart if this was a mocha test run.
@@ -107,22 +111,22 @@ node2.on('exit', function(code) {
         console.log('[INFO] Trying to restart background worker...');
         node2 = cp.fork('./worker/app_FORK.js');
         console.log('[INFO] ... Background worker restarted successfully.');
+        node2.on('exit', restartWorker);
     }
-});
-
+}
 
 /** Database Connection */
 
 var db = {};
-var MongoClient = require('mongodb').MongoClient;
+const MongoClient = require('mongodb').MongoClient;
 
 // connect to database
 MongoClient.connect(process.env.MONGODB_CONNECT_URL,
-                    function(err, client){
+                    function(err, client) {
     assert.equal(null, err);
     console.log("[INFO] Successfully connected to MongoDB database.");
     db.client = client;
-    db.collection = client.db('newswatcherdb').collection('newswatcherdb');
+    db.collection = client.db('newswatcherdb').collection('newswatcher');
 });
 
 // gracefully close the database connections and kill background child process
@@ -172,13 +176,13 @@ app.use(function(req, res, next) {
 
 // development error handler will expose stack trace to users
 if (app.get('env') === 'development') {
-    app.use(function(err, req, res, next)) {
+    app.use(function(err, req, res, next) {
         res = handle_error(err, res, true);
-    }
+    });
 }
 
 // production error handler will NOT expose stack track to users
-app.use(function(err, req, res, next){
+app.use(function(err, req, res, next) {
     res = handle_error(err, res, false);
 });
 
@@ -206,7 +210,7 @@ app.get('/', function (req, res) {
 // start web server and listen on the given port
 app.set('port', PORT);
 var server = app.listen(PORT, function() {
-    console.log(`Express server listening on http://localhost:${PORT}`);
+    console.log(`[INFO] Express server listening on http://localhost:${PORT}`);
 });
 
 // export server for our testing framework
