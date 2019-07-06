@@ -155,5 +155,44 @@ app.use(function (req, res, next) {
 
 
 
+/** Express Route Handlers */
+
+// REST API routes
+app.use('/api/users', users);
+app.use('/api/session', session);
+app.use('/api/sharedNews', sharedNews);
+app.use('/api/homeNews', homeNews);
+
+// catch 404 errors and forward to error handlers
+app.use(function(req, res, next) {
+    var err = new Error('Not Found');
+    err.status = 400;
+    next(err);
+});
+
+// development error handler will expose stack trace to users
+if (app.get('env') === 'development') {
+    app.use(function(err, req, res, next)) {
+        res = handle_error(err, res, true);
+    }
+}
+
+// production error handler will NOT expose stack track to users
+app.use(function(err, req, res, next){
+    res = handle_error(err, res, false);
+});
+
+function handle_error(err, res, exposeStackTrace) {
+    let errorCode = err.status || 500;
+    res.status(errorCode).json({
+        message: err.toString(),
+        error:   exposeStackTrace ? err : {}
+    });
+    console.log(`[ERROR] ${errorCode} error caught.`);
+    console.log(err);
+    return res;
+}
+
+
 
 
