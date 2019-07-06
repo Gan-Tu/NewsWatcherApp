@@ -195,4 +195,24 @@ function handle_error(err, res, exposeStackTrace) {
 
 
 
+/** Start the Application */
+
+// route root to the main HTML in static folder
+app.get('/', function (req, res) {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
+
+// start web server and listen on the given port
+app.set('port', PORT);
+var server = app.listen(PORT, function() {
+    console.log(`Express server listening on http://localhost:${PORT}`);
+});
+
+// export server for our testing framework
+
+server.db = db;
+server.node2 = node2;
+module.exports = server;
+
 
