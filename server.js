@@ -136,10 +136,14 @@ process.on('uncaughtException', interrupt_cleanup);
 
 function interrupt_cleanup() {
     console.log('[INFO] Cleaning up before app termination.');
-    db.client.close();
-    console.log('[INFO] ... MongoDB connection gracefully closed.');
-    node2.kill();
-    console.log('[INFO] ... Background worker gracefully killed.');
+    if (db && db.client) {
+        db.client.close();
+        console.log('[INFO] ... Background worker gracefully killed.');
+    }
+    if (node2) {
+        node2.kill();
+        console.log('[INFO] ... Background worker gracefully killed.');
+    }
     process.kill(process.pid);
 }
 
