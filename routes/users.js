@@ -9,6 +9,7 @@ var ObjectID = require('mongodb').ObjectID;
 
 var router = express.Router();
 
+
 /*
  * Requirements for password:
  * - 7 to 15 characters in length
@@ -17,7 +18,6 @@ var router = express.Router();
  * - contain at least one lowercase letter
  */
 const PASSWORD_SALT_ROUNDS = process.env.PASSWORD_SALT_ROUNDS || 10;
-
 // profile validation schema
 const USER_CREATION_SCHEMA = {
     displayName:    joi.string()
@@ -34,6 +34,38 @@ const USER_CREATION_SCHEMA = {
                        .regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{7,15}$/)
                        .required()
 };
+
+const USER_PROFILE_UPDATE_SCHEMA = {
+    requireWIFI:    joi.boolean()
+                       .required(),
+    enableAlerts:   joi.boolean()
+                       .required(),
+    newsFilters:    joi.array()
+                       .max(5)
+                       .required()
+}
+const NEWSFILTER_SCHEMA = {
+    name:           joi.string()
+                       .min(1)
+                       .max(30)
+                       .regex(/^[-_a-zA-Z0-9]+$/)
+                       .required(),
+    keyWords:       joi.array()
+                       .max(10)
+                       .items(joi.string()
+                                 .trim()
+                                 .max(20))
+                       .required(),
+    enableAlert:    joi.boolean(),
+    alertFrequency: joi.number().min(0),
+    enableAutoDelete: joi.boolean(),
+    deleteTime:     joi.date(),
+    timeOfLastScan: joi.date(),
+    newsStories:    joi.array(),
+    keywordsStr:    joi.string()
+                       .min(1)
+                       .max(100)
+}
 
 /**
  * User account creation
@@ -95,14 +127,14 @@ router.delete('/:id', authHelper.checkAuth, function(req, res, next) {
     req.db.collection.findOneAndDelete({
         type: "USER_TYPE",
         _id: ObjectID(req.auth.userId)
-    }, function callback(err, user) {
+    }, function callback(err, result) {
         if (err) {
             console.log("[ERROR] Failed to delete user id:", req.params.id);
             console.log("[ERROR] -- error:", err);
             return next(err);
-        } else if (!user) {
+        } else if (!result) {
             return next(new Error("User was not found."));
-        } else if (user.ok != 1) {
+        } else if (result.ok != 1) {
             console.log("[ERROR] Failed to delete user id:", req.params.id);
             return next(new Error("Account deletion failed"));
         } else {
@@ -146,6 +178,68 @@ router.get('/:id', authHelper.checkAuth, function(req, res, next) {
 });
 
 
+/**
+ * User account update
+ */
+router.put('/:id', authHelper.checkAuth, function(req, res, next) {
+    if (req.params.id != req.auth.userId) {
+        return next(new Error("Invalid request for account update"));
+    }
+    // validate body as a whole
+    joi.validate(req.body, USER_PROFILE_UPDATE_SCHEMA, function(err, _) {
+        if (err) {
+            return next(err);
+        }
+        // validate keyword filters, asynchronously
+        async.eachSeries(req.body.newsFilters, function(filter, callback) {
+            joi.validate(filter, NEWSFILTER_SCHEMA, err => callback(err));
+        }, function(err) {
+            // MongoDB implements optimistic concurrency for us.
+            // We were not holding on to the document anyway, so we just do a quick
+            // read and replace of just those properties and not the complete document.
+            // It matters if news stories were updated in the mean time
+            // (i.e. user sat there taking their time updating their news profile)
+            // because we will force that to update as part of this operation.
+            // We need the new document, so a test could verify what happened,
+            // otherwise the default is to return the original document.
+            req.body.newsFilters = cleanNewsFilters(req.body.newsFilters);
+            req.db.collection.findOneAndUpdate({
+                type: 'USER_TYPE',
+                _id: ObjectID(req.auth.userId)
+            }, {
+                $set: {
+                    settings: {
+                        requireWIFI: req.body.requireWIFI,
+                        enableAlerts: req.body.enableAlerts
+                    },
+                    newsFilters: req.body.newsFilters
+                }
+            }, {
+                returnOriginal: false
+            }, function(err, result) {
+                if (err) {
+                    console.log("[ERROR] Failed to update user id:", req.params.id);
+                    console.log("[ERROR] -- error:", err);
+                    return next(err);
+                } else if (!result) {
+                    return next(new Error("User was not found."));
+                } else if (result.ok != 1) {
+                    console.log("[ERROR] Failed to update user id:", req.params.id);
+                    return next(new Error("Account update failed"));
+                } else {
+                    // refresh news stories for the user
+                    req.node2.send({
+                        msg: "REFRESH_STORIES",
+                        doc: result.value
+                    })
+                    res.status(200).json(result.value);
+                }
+            });
+        });
+    });
+});
+
+
 // create a new, default user document
 function createUserDocument(displayName, email, passwordHash) {
     return {
@@ -180,6 +274,18 @@ function createUserDocument(displayName, email, passwordHash) {
             }
         ]
     }
+}
+
+// trim leading and trailing spaces in filter's keywords
+function cleanNewsFilters(filters) {
+    for (var i = filters.length - 1; i >= 0; i--) {
+        if ("keyWords" in filters[i]) {
+            filters[i].keyWords = filters[i].keyWords
+                                            .map(x => x.trim())
+                                            .filter(x => x != "");
+        }
+    }
+    return filters;
 }
 
 module.exports = router;
