@@ -94,6 +94,7 @@ const STORY_SCHEMA = {
                        .required()
 }
 
+
 /**
  * User account creation
  */
@@ -140,6 +141,7 @@ router.post('/', function(req, res, next) {
         });
     });
 })
+
 
 /**
  * User account deletion
@@ -284,7 +286,9 @@ router.post('/:id/savedstories', authHelper.checkAuth, function(req, res, next) 
         req.db.collection.findOneAndUpdate({
             type: 'USER_TYPE',
             _id: ObjectID(req.auth.userId),
-            savedStoriesCount: { "$lt": Int32(MAX_FILTER_STORIES)}
+            savedStoriesCount: {
+                $lt: Int32(MAX_FILTER_STORIES)
+            }
         }, {
             $addToSet: {
                 savedStories: req.body
@@ -314,6 +318,44 @@ router.post('/:id/savedstories', authHelper.checkAuth, function(req, res, next) 
 });
 
 
+/**
+ * Delete a story from the user
+ */
+router.delete('/:id/savedstories/:sid', authHelper.checkAuth, function(req, res, next) {
+    if (req.params.id != req.auth.userId) {
+        return next(new Error("Invalid request for deleting stories"));
+    }
+    req.db.collection.findOneAndUpdate({
+        type: 'USER_TYPE',
+        _id: ObjectID(req.auth.userId)
+    }, {
+        $pull: {
+            savedStories: {
+                storyID: req.params.sid
+            }
+        },
+        $inc: {
+            savedStoriesCount: -1
+        }
+    }, {
+        returnOriginal: false
+    }, function(err, result) {
+        if (err) {
+            console.log("[ERROR] Failed to delete story %d from user id %d",
+                        req.params.sid, req.params.id);
+            console.log("[ERROR] -- error:", err);
+            return next(err);
+        } else if (!result) {
+            return next(new Error("User was not found."));
+        } else if (result.ok != 1) {
+            console.log("[ERROR] Failed to delete story %d from user id %d",
+                        req.params.sid, req.params.id);
+            return next(new Error("Failed to delete the story"));
+        } else {
+            res.status(200).json(result.value);
+        }
+    });
+})
 
 // create a new, default user document
 function createUserDocument(displayName, email, passwordHash) {
