@@ -6,6 +6,7 @@ var async = require('async');
 var joi = require('joi'); // data validation
 var authHelper = require('./authHelper');
 var ObjectID = require('mongodb').ObjectID;
+var Int32 = require('mongodb').Int32;
 
 var router = express.Router();
 
@@ -18,7 +19,8 @@ var router = express.Router();
  * - contain at least one lowercase letter
  */
 const PASSWORD_SALT_ROUNDS = process.env.PASSWORD_SALT_ROUNDS || 10;
-// profile validation schema
+const MAX_FILTER_STORIES = process.env.MAX_FILTER_STORIES || 15;
+
 const USER_CREATION_SCHEMA = {
     displayName:    joi.string()
                        .regex(/^[0-9a-zA-Z\s-]+$/)
@@ -34,7 +36,6 @@ const USER_CREATION_SCHEMA = {
                        .regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{7,15}$/)
                        .required()
 };
-
 const USER_PROFILE_UPDATE_SCHEMA = {
     requireWIFI:    joi.boolean()
                        .required(),
@@ -66,6 +67,32 @@ const NEWSFILTER_SCHEMA = {
                        .min(1)
                        .max(100)
 }
+const STORY_SCHEMA = {
+    contentSnippet: joi.string()
+                       .max(200)
+                       .required(),
+    date:           joi.date()
+                       .required(),
+    hours:          joi.string()
+                       .max(20),
+    imageUrl:       joi.string()
+                       .max(300)
+                       .required(),
+    keep:           joi.boolean()
+                       .required(),
+    link:           joi.string()
+                       .max(300)
+                       .required(),
+    source:         joi.string()
+                       .max(50)
+                       .required(),
+    storyID:        joi.string()
+                       .max(100)
+                       .required(),
+    title:          joi.string()
+                       .max(200)
+                       .required()
+}
 
 /**
  * User account creation
@@ -73,7 +100,7 @@ const NEWSFILTER_SCHEMA = {
 router.post('/', function(req, res, next) {
     // validate user input
     console.log(req.body);
-    joi.validate(req.body, USER_CREATION_SCHEMA, function(err, value) {
+    joi.validate(req.body, USER_CREATION_SCHEMA, function(err) {
         if (err) {
             return next(err);
         }
@@ -186,7 +213,7 @@ router.put('/:id', authHelper.checkAuth, function(req, res, next) {
         return next(new Error("Invalid request for account update"));
     }
     // validate body as a whole
-    joi.validate(req.body, USER_PROFILE_UPDATE_SCHEMA, function(err, _) {
+    joi.validate(req.body, USER_PROFILE_UPDATE_SCHEMA, function(err) {
         if (err) {
             return next(err);
         }
@@ -238,6 +265,54 @@ router.put('/:id', authHelper.checkAuth, function(req, res, next) {
         });
     });
 });
+
+
+/**
+ * Save a story for the user
+ */
+router.post('/:id/savedstories', authHelper.checkAuth, function(req, res, next) {
+    if (req.params.id != req.auth.userId) {
+        return next(new Error("Invalid request for saving stories"));
+    }
+    joi.validate(req.body, STORY_SCHEMA, function(err) {
+        if (err) {
+            return next(err);
+        }
+        // Before we add a story, we have to ensure that
+        // - story does not already exist
+        // - the number of saved stories < MAX_FILTER_STORIES
+        req.db.collection.findOneAndUpdate({
+            type: 'USER_TYPE',
+            _id: ObjectID(req.auth.userId),
+            savedStoriesCount: { "$lt": Int32(MAX_FILTER_STORIES)}
+        }, {
+            $addToSet: {
+                savedStories: req.body
+            },
+            $inc: {
+                savedStoriesCount: 1
+            }
+        }, {
+            returnOriginal: false
+        }, function(err, result) {
+            if (err) {
+                console.log("[ERROR] Failed to save a story to user id:", req.params.id);
+                console.log("[ERROR] -- error:", err);
+                return next(err);
+            } else if (!result) {
+                return next(new Error("User was not found."));
+            } else if (result.ok != 1) {
+                console.log("[ERROR] Failed to save a story to user id:", req.params.id);
+                return next(new Error("Failed to save the story"));
+            } else if (result.value == null) {
+                return next(new Error("Story already exists, or the limit is reached."));
+            } else {
+                res.status(200).json(result.value);
+            }
+        });
+    });
+});
+
 
 
 // create a new, default user document
