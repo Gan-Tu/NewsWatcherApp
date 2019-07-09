@@ -16,8 +16,16 @@ module.exports.checkAuth = function(req, res, next) {
             req.auth = jwt.decode(token, process.env.JWT_SECRET);
             if (req.auth && // token should exists
                 req.auth.authorized && // token should not be tampered with
-                req.auth.userId) { // token should contain userId
-                next();
+                req.auth.userId && // token should contain userId
+                req.auth.sessionIP &&
+                req.auth.sessionUA) {
+                if (req.auth.sessionIP == req.ip &&
+                    req.auth.sessionUA == req.headers['user-agent']) {
+                    next();
+                } else {
+                    console.log("[ERROR] User x-auth token may be compromised.");
+                    return next(new Error("User is not logged in"));
+                }
             } else {
                 return next(new Error("User is not logged in"));
             }
