@@ -31,7 +31,6 @@ const SESSION_BODY_SCHEMA = {
  * The user email and password are sent in the body of the request.
  */
 router.post('/', function(req, res, next) {
-    // validate user input
     joi.validate(req.body, SESSION_BODY_SCHEMA, function(err, unused) {
         if (err) {
             return next(new Error("Invalid request for login"));
@@ -51,7 +50,7 @@ router.post('/', function(req, res, next) {
                            function callback(err, matched) {
                 if (err) {
                     return next(err);
-                } else (!matched) {
+                } else if (!matched) {
                     return next(new Error("Invalid credentials"));
                 }
                 // set authentication token
