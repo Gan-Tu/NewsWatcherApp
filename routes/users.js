@@ -24,7 +24,7 @@ const USER_CREATION_SCHEMA = {
     email: joi.string().email().min(7).max(50).required(),
     password: joi.string().regex(PASSWORD_SCHEMA).required()
 };
-const PASSWORD_SALT_ROUNDS = 10;
+const PASSWORD_SALT_ROUNDS = process.env.PASSWORD_SALT_ROUNDS || 10;
 
 /**
  * User account creation
@@ -40,10 +40,10 @@ router.post('/', function(req, res, next) {
         req.db.collection.findOne({
             type: "USER_TYPE",
             email: req.body.email
-        }, function callback(err, doc) {
+        }, function callback(err, user) {
             if (err) {
                 return next(err);
-            } else if (doc) {
+            } else if (user) {
                 return next(new Error("Email is already in use by an account."));
             }
             // create user
@@ -86,13 +86,15 @@ router.delete('/:id', authHelper.checkAuth, function(req, res, next) {
     req.db.collection.findOneAndDelete({
         type: "USER_TYPE",
         _id: ObjectID(req.auth.userId)
-    }, function callback(err, deletedDoc) {
+    }, function callback(err, user) {
         if (err) {
             console.log("[ERROR] Failed to delete user id:", req.params.id);
             console.log("[ERROR] -- error:", err);
             return next(err);
-        } else if (deletedDoc.ok != 1) {
-            console.log("[ERROR] Failed to delete document id:", deletedDoc._id);
+        } else if (!user) {
+            return next(new Error("User was not found."));
+        } else if (user.ok != 1) {
+            console.log("[ERROR] Failed to delete user id:", req.params.id);
             return next(new Error("Account deletion failed"));
         } else {
             res.status(200).json({ msg: "User successfully deleted." });
@@ -111,23 +113,26 @@ router.get('/:id', authHelper.checkAuth, function(req, res, next) {
     req.db.collection.findOne({
         type: "USER_TYPE",
         _id: ObjectID(req.auth.userId)
-    }, function callback(err, doc) {
+    }, function callback(err, user) {
         if (err) {
             return next(err);
+        } else if (!user) {
+            return next(new Error("User was not found."));
         }
+        var userProfile = {
+            email: user.email,
+            displayName: user.displayName,
+            date: user.date,
+            settings: user.settings,
+            newsFilters: user.newsFilters,
+            savedStories: user.savedStories
+        };
         // prevent UI presentation layer to use out-of-date user
         res.header("Cache-Control", "no-cache, no-store, must-revalidate");
         res.header("Pragma", "no-cache");
         res.header("Expires", 0);
         // send profile
-        res.status(200).json({
-            email: doc.email,
-            displayName: doc.displayName,
-            date: doc.date,
-            settings: doc.seettings,
-            newsFilters: doc.newsFilters,
-            savedStories: doc.savedStories
-        });
+        res.status(200).json(userProfile);
     });
 });
 
