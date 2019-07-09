@@ -15,7 +15,7 @@ module.exports.checkAuth = function(req, res, next) {
         try {
             req.auth = jwt.decode(token, process.env.JWT_SECRET);
             if (req.auth && // token should exists
-                req.auth.auth.authorized && // token should not be tampered with
+                req.auth.authorized && // token should not be tampered with
                 req.auth.userId) { // token should contain userId
                 next();
             } else {

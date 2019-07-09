@@ -55,7 +55,7 @@ router.post('/', function(req, res, next) {
                 }
                 // set authentication token
                 try {
-                    var userID = user._id.toHexString();
+                    var userId = user._id.toHexString();
                     var displayName = user.displayName;
 
                     // generate authentication token
@@ -63,14 +63,14 @@ router.post('/', function(req, res, next) {
                         authorized: true,
                         sessionIP: req.ip,
                         sessionUA: req.headers['user-agent'],
-                        userID: userID,
+                        userId: userId,
                         displayName: displayName
                     }, process.env.JWT_SECRET);
 
                     // return session result
                     res.status(200).json({
                         displayName: displayName,
-                        userID: userID,
+                        userId: userId,
                         token: token,
                         msg: "Successfully logged in"
                     });
