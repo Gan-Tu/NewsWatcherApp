@@ -73,6 +73,33 @@ router.post('/', function(req, res, next) {
     });
 })
 
+/**
+ * User account deletion
+ */
+router.delete('/:id', authHelper.checkAuth, function(req, res, next) {
+    // check that we are deleting the current logged-in user
+    if (req.params.id != req.auth.userId) {
+        return next(new Error("Invalid request for account deletion"));
+    }
+    // MongoDB should queue this up and retry if there is a conflict
+    // This actually requires a write lock on their part.
+    req.db.collection.findOneAndDelete({
+        type: "USER_TYPE",
+        _id: ObjectID(req.auth.userId)
+    }, function callback(err, deletedDoc) {
+        if (err) {
+            console.log("[ERROR] Failed to delete user id:", req.params.id);
+            console.log("[ERROR] -- error:", err);
+            return next(err);
+        } else if (deletedDoc.ok != 1) {
+            console.log("[ERROR] Failed to delete document id:", deletedDoc._id);
+            return next(new Error("Account deletion failed"));
+        } else {
+            res.status(200).json({ msg: "User successfully deleted." });
+        }
+    });
+});
+
 
 // create a new, default user document
 function createUserDocument(displayName, email, passwordHash) {
