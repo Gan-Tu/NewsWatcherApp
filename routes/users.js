@@ -5,7 +5,7 @@ var bcrypt = require('bcryptjs'); // password hash comparison
 var async = require('async');
 var joi = require('joi'); // data validation
 var authHelper = require('./authHelper');
-var objectId = require('mongodb').ObjectID;
+var ObjectID = require('mongodb').ObjectID;
 
 var router = express.Router();
 
@@ -97,6 +97,37 @@ router.delete('/:id', authHelper.checkAuth, function(req, res, next) {
         } else {
             res.status(200).json({ msg: "User successfully deleted." });
         }
+    });
+});
+
+
+/**
+ * User account retrieval
+ */
+router.get('/:id', authHelper.checkAuth, function(req, res, next) {
+    if (req.params.id != req.auth.userId) {
+        return next(new Error("Invalid request for account fetch"));
+    }
+    req.db.collection.findOne({
+        type: "USER_TYPE",
+        _id: ObjectID(req.auth.userId)
+    }, function callback(err, doc) {
+        if (err) {
+            return next(err);
+        }
+        // prevent UI presentation layer to use out-of-date user
+        res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.header("Pragma", "no-cache");
+        res.header("Expires", 0);
+        // send profile
+        res.status(200).json({
+            email: doc.email,
+            displayName: doc.displayName,
+            date: doc.date,
+            settings: doc.seettings,
+            newsFilters: doc.newsFilters,
+            savedStories: doc.savedStories
+        });
     });
 });
 
