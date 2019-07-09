@@ -130,23 +130,17 @@ MongoClient.connect(process.env.MONGODB_CONNECT_URL,
 });
 
 // gracefully close the database connections and kill background child process
-process.on('SIGINT', function () {
-    console.log('[INFO] Cleaning up before app termination.');
-    interrupt_cleanup();
-    process.exit(0);
-});
-
-process.on('SIGUSR2', function () {
-    console.log('[INFO] Cleaning up before app restart.');
-    interrupt_cleanup();
-    process.kill(process.pid, 'SIGUSR2');
-});
+process.on('SIGINT', interrupt_cleanup);
+process.on('SIGUSR2', interrupt_cleanup);
+process.on('uncaughtException', interrupt_cleanup);
 
 function interrupt_cleanup() {
+    console.log('[INFO] Cleaning up before app termination.');
     db.client.close();
     console.log('[INFO] ... MongoDB connection gracefully closed.');
     node2.kill();
     console.log('[INFO] ... Background worker gracefully killed.');
+    process.kill(process.pid);
 }
 
 // set the database connection for middleware usage
