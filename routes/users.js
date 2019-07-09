@@ -18,8 +18,8 @@ var router = express.Router();
  * - contain at least one uppercase letter
  * - contain at least one lowercase letter
  */
-const PASSWORD_SALT_ROUNDS = process.env.PASSWORD_SALT_ROUNDS || 10;
-const MAX_FILTER_STORIES = process.env.MAX_FILTER_STORIES || 15;
+const PASSWORD_SALT_ROUNDS = parseInt(process.env.PASSWORD_SALT_ROUNDS) || 10;
+const MAX_FILTER_STORIES = parseInt(process.env.MAX_FILTER_STORIES) || 15;
 
 const USER_CREATION_SCHEMA = {
     displayName:    joi.string()
@@ -286,7 +286,7 @@ router.post('/:id/savedstories', authHelper.checkAuth, function(req, res, next) 
             type: 'USER_TYPE',
             _id: ObjectID(req.auth.userId),
             savedStoriesCount: {
-                $lt: Int32(MAX_FILTER_STORIES)
+                $lt: MAX_FILTER_STORIES
             }
         }, {
             $addToSet: {
@@ -369,6 +369,7 @@ function createUserDocument(displayName, email, passwordHash) {
             requireWIFI: true,
             enableAlerts: false
         },
+        savedStoriesCount: 0,
         savedStories: [],
         newsFilters: [
             {

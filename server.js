@@ -138,7 +138,7 @@ function interrupt_cleanup() {
     console.log('[INFO] Cleaning up before app termination.');
     if (db && db.client) {
         db.client.close();
-        console.log('[INFO] ... Background worker gracefully killed.');
+        console.log('[INFO] ... Database connection gracefully closed.');
     }
     if (node2) {
         node2.kill();
