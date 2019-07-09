@@ -100,7 +100,6 @@ const STORY_SCHEMA = {
  */
 router.post('/', function(req, res, next) {
     // validate user input
-    console.log(req.body);
     joi.validate(req.body, USER_CREATION_SCHEMA, function(err) {
         if (err) {
             return next(err);
