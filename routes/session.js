@@ -15,12 +15,15 @@ var router = express.Router();
  * - contain at least one uppercase letter
  * - contain at least one lowercase letter
  */
-const PASSWORD_SCHEMA =
-    /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{7,15}$/;
-
 const SESSION_BODY_SCHEMA = {
-    email: joi.string().email().min(7).max(50).required(),
-    password: joi.string().regex(PASSWORD_SCHEMA).required()
+    email:      joi.string()
+                   .email()
+                   .min(7)
+                   .max(50)
+                   .required(),
+    password:   joi.string()
+                   .regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{7,15}$/)
+                   .required()
 };
 
 /**

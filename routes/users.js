@@ -16,15 +16,24 @@ var router = express.Router();
  * - contain at least one uppercase letter
  * - contain at least one lowercase letter
  */
-const PASSWORD_SCHEMA =
-    /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{7,15}$/;
-const NAME_SCHEMA = /^[0-9a-zA-Z\s-]+$/;
-const USER_CREATION_SCHEMA = {
-    displayName: joi.string().regex(NAME_SCHEMA).min(3).max(50).required(),
-    email: joi.string().email().min(7).max(50).required(),
-    password: joi.string().regex(PASSWORD_SCHEMA).required()
-};
 const PASSWORD_SALT_ROUNDS = process.env.PASSWORD_SALT_ROUNDS || 10;
+
+// profile validation schema
+const USER_CREATION_SCHEMA = {
+    displayName:    joi.string()
+                       .regex(/^[0-9a-zA-Z\s-]+$/)
+                       .min(3)
+                       .max(50)
+                       .required(),
+    email:          joi.string()
+                       .email()
+                       .min(7)
+                       .max(50)
+                       .required(),
+    password:       joi.string()
+                       .regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{7,15}$/)
+                       .required()
+};
 
 /**
  * User account creation
