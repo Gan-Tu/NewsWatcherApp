@@ -1,2 +1,2 @@
 # NewsWatcherApp
-View the website [here](http://tugan-newswatcher-1.us-east-1.elasticbeanstalk.com/)
+View the website [here](https://tugan-newswatcher.herokuapp.com/)
