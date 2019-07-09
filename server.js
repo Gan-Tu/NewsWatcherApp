@@ -169,7 +169,7 @@ app.use('/api/homeNews', homeNews);
 
 // catch 404 errors and forward to error handlers
 app.use(function(req, res, next) {
-    var err = new Error('Not Found');
+    var err = new Error('404 Page Not Found');
     err.status = 400;
     next(err);
 });
