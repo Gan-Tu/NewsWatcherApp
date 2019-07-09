@@ -72,7 +72,6 @@ const NEWSFILTER_SCHEMA = {
  */
 router.post('/', function(req, res, next) {
     // validate user input
-    console.log(req.body);
     joi.validate(req.body, USER_CREATION_SCHEMA, function(err, value) {
         if (err) {
             return next(err);
