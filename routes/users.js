@@ -287,9 +287,14 @@ router.post('/:id/savedstories', authHelper.checkAuth, function(req, res, next) 
             _id: ObjectID(req.auth.userId),
             savedStoriesCount: {
                 $lt: MAX_FILTER_STORIES
+            },
+            savedStories: {
+                $not: {
+                    $elemMatch: req.body
+                }
             }
         }, {
-            $addToSet: {
+            $push: {
                 savedStories: req.body
             },
             $inc: {
@@ -324,6 +329,8 @@ router.delete('/:id/savedstories/:sid', authHelper.checkAuth, function(req, res,
     if (req.params.id != req.auth.userId) {
         return next(new Error("Invalid request for deleting stories"));
     }
+    // the story id has to be unique, otherwise application
+    // will fail, resulting in incorrect savedStoriesCount
     req.db.collection.findOneAndUpdate({
         type: 'USER_TYPE',
         _id: ObjectID(req.auth.userId)
