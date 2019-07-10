@@ -5,94 +5,14 @@ var bcrypt = require('bcryptjs'); // password hash comparison
 var async = require('async');
 var joi = require('joi'); // data validation
 var authHelper = require('./authHelper');
+var schema = require('./schema');
 var ObjectID = require('mongodb').ObjectID;
 var Int32 = require('mongodb').Int32;
 
 var router = express.Router();
 
-
-/*
- * Requirements for password:
- * - 7 to 15 characters in length
- * - contain at least one numeric digit
- * - contain at least one uppercase letter
- * - contain at least one lowercase letter
- */
 const PASSWORD_SALT_ROUNDS = parseInt(process.env.PASSWORD_SALT_ROUNDS) || 10;
 const MAX_FILTER_STORIES = parseInt(process.env.MAX_FILTER_STORIES) || 15;
-
-const USER_CREATION_SCHEMA = {
-    displayName:    joi.string()
-                       .regex(/^[0-9a-zA-Z\s-]+$/)
-                       .min(3)
-                       .max(50)
-                       .required(),
-    email:          joi.string()
-                       .email()
-                       .min(7)
-                       .max(50)
-                       .required(),
-    password:       joi.string()
-                       .regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{7,15}$/)
-                       .required()
-};
-const USER_PROFILE_UPDATE_SCHEMA = {
-    requireWIFI:    joi.boolean()
-                       .required(),
-    enableAlerts:   joi.boolean()
-                       .required(),
-    newsFilters:    joi.array()
-                       .max(5)
-                       .required()
-}
-const NEWSFILTER_SCHEMA = {
-    name:           joi.string()
-                       .min(1)
-                       .max(30)
-                       .regex(/^[-_a-zA-Z0-9]+$/)
-                       .required(),
-    keyWords:       joi.array()
-                       .max(10)
-                       .items(joi.string()
-                                 .trim()
-                                 .max(20))
-                       .required(),
-    enableAlert:    joi.boolean(),
-    alertFrequency: joi.number().min(0),
-    enableAutoDelete: joi.boolean(),
-    deleteTime:     joi.date(),
-    timeOfLastScan: joi.date(),
-    newsStories:    joi.array(),
-    keywordsStr:    joi.string()
-                       .min(1)
-                       .max(100)
-}
-const STORY_SCHEMA = {
-    contentSnippet: joi.string()
-                       .max(200)
-                       .required(),
-    date:           joi.date()
-                       .required(),
-    hours:          joi.string()
-                       .max(20),
-    imageUrl:       joi.string()
-                       .max(300)
-                       .required(),
-    keep:           joi.boolean()
-                       .required(),
-    link:           joi.string()
-                       .max(300)
-                       .required(),
-    source:         joi.string()
-                       .max(50)
-                       .required(),
-    storyID:        joi.string()
-                       .max(100)
-                       .required(),
-    title:          joi.string()
-                       .max(200)
-                       .required()
-}
 
 
 /**
@@ -100,7 +20,7 @@ const STORY_SCHEMA = {
  */
 router.post('/', function(req, res, next) {
     // validate user input
-    joi.validate(req.body, USER_CREATION_SCHEMA, function(err) {
+    joi.validate(req.body, schema.CREATE_USER, function(err) {
         if (err) {
             return next(err);
         }
@@ -214,13 +134,13 @@ router.put('/:id', authHelper.checkAuth, function(req, res, next) {
         return next(new Error("Invalid request for account update"));
     }
     // validate body as a whole
-    joi.validate(req.body, USER_PROFILE_UPDATE_SCHEMA, function(err) {
+    joi.validate(req.body, schema.UPDATE_USER, function(err) {
         if (err) {
             return next(err);
         }
         // validate keyword filters, asynchronously
         async.eachSeries(req.body.newsFilters, function(filter, callback) {
-            joi.validate(filter, NEWSFILTER_SCHEMA, err => callback(err));
+            joi.validate(filter, schema.NEWS_FILTER, err => callback(err));
         }, function(err) {
             // MongoDB implements optimistic concurrency for us.
             // We were not holding on to the document anyway, so we just do a quick
@@ -275,7 +195,7 @@ router.post('/:id/savedstories', authHelper.checkAuth, function(req, res, next) 
     if (req.params.id != req.auth.userId) {
         return next(new Error("Invalid request for saving stories"));
     }
-    joi.validate(req.body, STORY_SCHEMA, function(err) {
+    joi.validate(req.body, schema.NEWS_STORY, function(err) {
         if (err) {
             return next(err);
         }
