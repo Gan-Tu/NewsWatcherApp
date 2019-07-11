@@ -41,12 +41,12 @@ process.on('uncaughtException', interrupt_cleanup);
 
 function interrupt_cleanup(err) {
     if (err) {
-        console.log("[ERROR] Caught: ", err);
+        console.log("[ERROR] Forked worker caught: ", err);
     }
-    console.log('[INFO] Cleaning up before worker termination.');
+    console.log('[INFO] Forked worker cleaning up before worker termination.');
     if (db && db.client) {
         db.client.close();
-        console.log('[INFO] ... Database connection gracefully closed.');
+        console.log("[INFO] ... Forked worker's database connection gracefully closed.");
     }
     process.kill(process.pid);
 }
@@ -61,7 +61,7 @@ process.on("message", function(msg) {
             }, msg.doc);
         }
     } else {
-        console.log("[WARNING] Message sent to worker by master is malformed.");
+        console.log("[WARNING] Forked worker received malformed message from server.");
         console.log("[WARNING] The messages should contain a 'command' field; got:", msg);
     }
 });
@@ -77,7 +77,7 @@ function refreshStories(doc, callback) {
             _id: ObjectID(process.env.GLOBAL_STORIES_ID),
         }, function(err, doc) {
             if (err) {
-                console.log("[ERROR] Failed to fetch global story: ", err);
+                console.log("[ERROR] Forked worker failed to fetch global story: ", err);
                 if (callback) {
                     return callback(err);
                 } else {
