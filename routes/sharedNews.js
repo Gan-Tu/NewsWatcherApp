@@ -20,6 +20,8 @@ router.post('/', authHelper.checkAuth, function(req, res, next) {
             return next(err);
         }
         // check our shared story limit
+        // [DANGER] this method is not race-condition safe, but MongoDB
+        // free tier doesn't support $where clause
         req.db.collection.count({
             type: "SHAREDSTORY_TYPE",
         }, function(err, count) {
@@ -117,6 +119,8 @@ router.post('/:sid/comments', authHelper.checkAuth, function(req, res, next) {
             return next(err);
         }
         // check comment count
+        // [DANGER] this method is not race-condition safe, but MongoDB
+        // free tier doesn't support $where clause
         req.db.collection.findOne({
             type: "SHAREDSTORY_TYPE",
             _id: ObjectID(req.params.sid)
