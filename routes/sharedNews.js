@@ -60,6 +60,21 @@ router.post('/', authHelper.checkAuth, function(req, res, next) {
     })
 });
 
+
+/**
+ * Get all shared news stories
+ */
+router.get('/', authHelper.checkAuth, function(req, res, next) {
+    req.db.collection.find({
+        type: "SHAREDSTORY_TYPE",
+    }).toArray(function(err, docs) {
+        if (err) {
+            return next(err);
+        }
+        res.status(200).json(docs);
+    })
+});
+
 // return a new shared story
 function createSharedStory(storyID,
                            newsStory,
