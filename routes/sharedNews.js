@@ -38,15 +38,15 @@ router.post('/', authHelper.checkAuth, function(req, res, next) {
                     return next(new Error("Story has already been shared"));
                 }
                 // set default comment, if necessary
-                var comment = `${req.auth.displayName} thinks the story is cool`;
-                if ("comment" in req.body && req.body.comment.length > 0) {
-                    comment = req.body.comment;
+                if (!req.body.comment) {
+                    req.body.comment = `${req.auth.displayName} thinks the story is cool`;
                 }
+                var comment = createComment(req.auth.displayName,
+                                            req.auth.userId,
+                                            req.body.comment)
                 // we set the id and guarantee uniqueness or failure happen
                 var storyDoc = createSharedStory(req.body.story.storyID,
                                                  req.body.story,
-                                                 req.auth.displayName,
-                                                 req.auth.userId,
                                                  comment);
                 // insert shared story
                 req.db.collection.insertOne(storyDoc, function(err, result) {
@@ -109,24 +109,25 @@ router.delete('/:sid', authHelper.checkAuth, function(req, res, next) {
 
 
 // return a new shared story
-function createSharedStory(storyID,
-                           newsStory,
-                           commenterName,
-                           commeterID,
-                           comment) {
+function createSharedStory(storyID, newsStory, shareComment) {
     return {
         _id: ObjectID(storyID),
         type: "SHAREDSTORY_TYPE",
         story: newsStory,
-        comments: [{
-            displayName: commenterName,
-            userID: commeterID,
-            dateTime: Date.now(),
-            comment: comment
-        }]
+        comments: [ shareComment ]
+    }
+}
 
+// return a new comment
+function createComment(commenterName, commeterID, comment) {
+    return {
+        displayName: commenterName,
+        userID: commeterID,
+        dateTime: Date.now(),
+        comment: comment
     }
 }
 
 
 module.exports = router;
+

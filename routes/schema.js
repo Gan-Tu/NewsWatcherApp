@@ -37,6 +37,12 @@ const NEWS_FILTER = joi.string()
                        .regex(/^[-_a-zA-Z0-9]{1,30}$/);
 
 /*
+ * Valid schema for comments
+ */
+const COMMENT = joi.string().trim().max(140).empty('');
+
+
+/*
  * Valid schema for session logins:
  */
 const SESSION_BODY = {
@@ -105,7 +111,7 @@ const NEWS_STORY = {
  */
 const SHARED_STORY = {
     story: joi.object(NEWS_STORY).required(),
-    comment: joi.string().trim().max(140).empty('')
+    comment: COMMENT
 };
 
 
@@ -113,6 +119,7 @@ const SHARED_STORY = {
 module.exports.PASSWORD = PASSWORD;
 module.exports.EMAIL = EMAIL;
 module.exports.DISPLAY_NAME = DISPLAY_NAME;
+module.exports.COMMENT = COMMENT;
 module.exports.NEWS_FILTER = NEWS_FILTER;
 module.exports.SESSION_BODY = SESSION_BODY;
 module.exports.CREATE_USER = CREATE_USER;
