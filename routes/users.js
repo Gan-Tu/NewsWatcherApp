@@ -187,6 +187,31 @@ router.put('/:id', authHelper.checkAuth, function(req, res, next) {
     });
 });
 
+/**
+ * Get all stories for the user
+ */
+router.get('/:id/savedstories', authHelper.checkAuth, function(req, res, next) {
+    if (req.params.id != req.auth.userId) {
+        return next(new Error("Invalid request for getting stories"));
+    }
+    req.db.collection.findOne({
+        type: "USER_TYPE",
+        _id: ObjectID(req.auth.userId)
+    }, function callback(err, user) {
+        if (err) {
+            return next(err);
+        } else if (!user) {
+            return next(new Error("User was not found."));
+        }
+        // prevent UI presentation layer to use out-of-date user
+        res.header("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.header("Pragma", "no-cache");
+        res.header("Expires", 0);
+        // send profile
+        res.status(200).json(user.savedStories);
+    });
+});
+
 
 /**
  * Save a story for the user
