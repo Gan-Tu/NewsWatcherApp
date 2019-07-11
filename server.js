@@ -132,7 +132,7 @@ MongoClient.connect(process.env.MONGODB_CONNECT_URL,
 // gracefully close the database connections and kill background child process
 process.on('SIGINT', interrupt_cleanup);
 process.on('SIGUSR2', interrupt_cleanup);
-// process.on('uncaughtException', interrupt_cleanup);
+process.on('uncaughtException', interrupt_cleanup);
 
 function interrupt_cleanup(err) {
     if (err) {
