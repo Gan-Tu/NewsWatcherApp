@@ -100,6 +100,15 @@ const NEWS_STORY = {
     title:          joi.string().max(200).required()
 }
 
+/*
+ * Valid schema for sharing a story
+ */
+const SHARED_STORY = {
+    story: joi.object(NEWS_STORY).required(),
+    comment: joi.string().trim().max(140).empty('')
+};
+
+
 // exports
 module.exports.PASSWORD = PASSWORD;
 module.exports.EMAIL = EMAIL;
@@ -110,3 +119,5 @@ module.exports.CREATE_USER = CREATE_USER;
 module.exports.UPDATE_USER = UPDATE_USER;
 module.exports.NEWSFILTER = NEWSFILTER;
 module.exports.NEWS_STORY = NEWS_STORY;
+module.exports.SHARED_STORY = SHARED_STORY;
+
