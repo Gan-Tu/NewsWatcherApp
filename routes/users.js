@@ -50,7 +50,7 @@ router.post('/', function(req, res, next) {
                     var insertedDoc = result.ops[0];
                     // get initial matching stories using forked child process
                     req.node2.send({
-                        msg: "REFRESH_STORIES",
+                        command: "REFRESH_STORIES",
                         doc: insertedDoc
                     });
                     // return result
@@ -177,7 +177,7 @@ router.put('/:id', authHelper.checkAuth, function(req, res, next) {
                 } else {
                     // refresh news stories for the user
                     req.node2.send({
-                        msg: "REFRESH_STORIES",
+                        command: "REFRESH_STORIES",
                         doc: result.value
                     })
                     res.status(200).json(result.value);
