@@ -75,6 +75,39 @@ router.get('/', authHelper.checkAuth, function(req, res, next) {
     })
 });
 
+
+/**
+ * Delete a shared news story
+ * [DANGER] Currently the api is exposed and allow all users to delete stories
+ * so we use a very NAIVE way for restricting access
+ */
+router.delete('/:sid', authHelper.checkAuth, function(req, res, next) {
+    if (req.query.admin_token != process.env.ADMIN_TOKEN) {
+        // preliminary authentication, for development purpose
+        return next(new Error("Only admin can delete comments right now"));
+    }
+    req.db.collection.findOneAndDelete({
+        type: "SHAREDSTORY_TYPE",
+        _id: ObjectID(req.params.sid)
+    }, {
+        returnOriginal: true
+    }, function(err, result) {
+        if (err) {
+            console.log("[ERROR] Failed to delete shared story %d", req.params.sid);
+            console.log("[ERROR] -- error:", err);
+            return next(err);
+        } else if (!result) {
+            return next(new Error("Story was not found."));
+        } else if (result.ok != 1) {
+            console.log("[ERROR] Failed to delete shared story %d", req.params.sid);
+            return next(new Error("Failed to delete the story"));
+        } else {
+            res.status(200).json({msg: "Shared story deleted successfully"});
+        }
+    })
+});
+
+
 // return a new shared story
 function createSharedStory(storyID,
                            newsStory,
