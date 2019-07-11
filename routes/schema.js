@@ -39,7 +39,7 @@ const NEWS_FILTER = joi.string()
 /*
  * Valid schema for comments
  */
-const COMMENT = joi.string().trim().max(140).empty('');
+const COMMENT = joi.string().trim().max(250).empty('');
 
 
 /*
@@ -95,7 +95,7 @@ const NEWSFILTER = {
  * Valid schema for stories
  */
 const NEWS_STORY = {
-    contentSnippet: joi.string().max(200).required(),
+    contentSnippet: joi.string().max(700).required(),
     date:           joi.date().required(),
     hours:          joi.string().max(20),
     imageUrl:       joi.string().max(300).required(),
@@ -103,7 +103,7 @@ const NEWS_STORY = {
     link:           joi.string().max(300).required(),
     source:         joi.string().max(50).required(),
     storyID:        joi.string().max(100).required(),
-    title:          joi.string().max(200).required()
+    title:          joi.string().max(300).required()
 }
 
 /*
@@ -113,6 +113,13 @@ const SHARED_STORY = {
     story: joi.object(NEWS_STORY).required(),
     comment: COMMENT
 };
+
+/*
+ * Valid schema for posting a comment
+ */
+const POST_COMMENT = {
+    comment: COMMENT.required()
+}
 
 
 // exports
@@ -127,4 +134,5 @@ module.exports.UPDATE_USER = UPDATE_USER;
 module.exports.NEWSFILTER = NEWSFILTER;
 module.exports.NEWS_STORY = NEWS_STORY;
 module.exports.SHARED_STORY = SHARED_STORY;
+module.exports.POST_COMMENT = POST_COMMENT;
 

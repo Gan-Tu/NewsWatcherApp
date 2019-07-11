@@ -9,6 +9,7 @@ var schema = require('./schema');
 var router = express.Router();
 
 const MAX_SHARED_STORIES = parseInt(process.env.MAX_SHARED_STORIES) || 30;
+const MAX_COMMENTS = parseInt(process.env.MAX_COMMENTS) || 30;
 
 /**
  * Share a news story
@@ -107,6 +108,56 @@ router.delete('/:sid', authHelper.checkAuth, function(req, res, next) {
     })
 });
 
+/**
+ * Add a comment to a shared story
+ */
+router.post('/:sid/comments', authHelper.checkAuth, function(req, res, next) {
+    joi.validate(req.body, schema.POST_COMMENT, function(err) {
+        if (err) {
+            return next(err);
+        }
+        // check comment count
+        req.db.collection.findOne({
+            type: "SHAREDSTORY_TYPE",
+            _id: ObjectID(req.params.sid)
+        }, function(err, doc) {
+            if (err) {
+                return next(err);
+            } else if (!doc) {
+                return next(new Error("Story was not found."));
+            } else if (doc.comments.length >= MAX_COMMENTS) {
+                return next(new Error("Max comments limit reached"));
+            }
+            // actually post the comment
+            var comment = createComment(req.auth.displayName,
+                                    req.auth.userId,
+                                    req.body.comment);
+            req.db.collection.findOneAndUpdate({
+                type: "SHAREDSTORY_TYPE",
+                _id: ObjectID(req.params.sid)
+            }, {
+                $push: {
+                    comments: comment
+                }
+            }, {
+                returnOriginal: false
+            }, function(err, result) {
+                if (err) {
+                    console.log("[ERROR] Failed to post a comment to story:", req.params.sid);
+                    console.log("[ERROR] -- error:", err);
+                    return next(err);
+                } else if (!result) {
+                    return next(new Error("Story was not found."));
+                } else if (result.ok != 1) {
+                    console.log("[ERROR] Failed to post a comment to story:", req.params.sid);
+                    return next(new Error("Failed to post comment"));
+                } else {
+                    res.status(201).json(result.value);
+                }
+            })
+        });
+    })
+});
 
 // return a new shared story
 function createSharedStory(storyID, newsStory, shareComment) {
