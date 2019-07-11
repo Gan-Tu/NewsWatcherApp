@@ -17,7 +17,7 @@ var csp = require('helmet-csp'); // content security policies
 var RateLimit = require('express-rate-limit'); // IP based rate limiter
 
 // import environment secrets
-if (process.env.PRODUCTION !== 'production') {
+if (process.env.NODE_ENV !== 'production') {
     // read secrets from '.env' file for local dev
     require('dotenv').config();
 }
@@ -79,7 +79,9 @@ app.use(csp({
 app.use(responseTime());
 
 // log all HTTP requests
-app.use(logger('dev'));
+if (process.env.NODE_ENV !== 'test') {
+    app.use(logger('dev'));
+}
 
 // parse JSON body of requests and make it available under `res.body`
 // limit body to 100KB to avoid DOS/DDOS related attacks
