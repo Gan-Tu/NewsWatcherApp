@@ -104,11 +104,18 @@ function refreshStoriesFromGlobalDoc(user, callback) {
     for (var filterIdx = 0; filterIdx < user.newsFilters.length; filterIdx++) {
         var filter = user.newsFilters[filterIdx];
         var matchedNewStories = [];
+        var existingStoryIDs = new Set(filter.newsStories.map(story => story.storyID));
 
         // we populate our new list by checking each new story in global document
         // against the keywords of the current filter for the user
         for (var i = 0; i < globalNewsDoc.newsStories.length; i++) {
             var story = globalNewsDoc.newsStories[i];
+
+            // we avoid adding duplicates
+            if (existingStoryIDs.has(story.storyID)) {
+                continue;
+            }
+
             // if the story matches any keyword in the current filter
             // we select the story as a candidate
             for (var j = 0; j < filter.keyWords.length; j++) {
@@ -125,7 +132,7 @@ function refreshStoriesFromGlobalDoc(user, callback) {
             }
         }
         // we push new found stories for the user, and keep the old ones if necessary
-        // so as to limit the total number of stories to the maximum
+        // while avoiding duplicates, so as to limit the total number of stories
         filter.newsStories = filter.newsStories.concat(matchedNewStories);
         filter.newsStories = filter.newsStories.slice(0, process.env.MAX_FILTER_STORIES);
     }
@@ -148,7 +155,7 @@ function refreshStoriesFromGlobalDoc(user, callback) {
             console.log("[ERROR] Forked worker failed to update news for user: ", user._id);
             err = new Error("Forked child failed to update news for user");
         } else if (user.newsFilters.length > 0) {
-            console.log("[INFO] %d news in total are added for user %s",totalNewsAdded, user._id);
+            console.log("[INFO] %d news in total are added for user %s", totalNewsAdded, user._id);
         } else {
             console.log("[WARNING] No news is added because user has no filters.");
         }
