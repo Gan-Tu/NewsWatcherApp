@@ -227,42 +227,47 @@ router.post('/:id/savedstories', authHelper.checkAuth, function(req, res, next) 
         // Before we add a story, we have to ensure that
         // - story does not already exist
         // - the number of saved stories < MAX_FILTER_STORIES
-        req.db.collection.findOneAndUpdate({
+        req.db.collection.findOne({
             type: 'USER_TYPE',
             _id: ObjectID(req.auth.userId),
-            savedStoriesCount: {
-                $lt: MAX_FILTER_STORIES
-            },
-            savedStories: {
-                $not: {
-                    $elemMatch: req.body
-                }
-            }
-        }, {
-            $push: {
-                savedStories: req.body
-            },
-            $inc: {
-                savedStoriesCount: 1
-            }
-        }, {
-            returnOriginal: false
         }, function(err, result) {
             if (err) {
-                console.log("[ERROR] Failed to save a story to user id:", req.params.id);
+                console.log("[ERROR] Failed to count stories in user id:", req.params.id);
                 console.log("[ERROR] -- error:", err);
                 return next(err);
             } else if (!result) {
                 return next(new Error("User was not found."));
-            } else if (result.ok != 1) {
-                console.log("[ERROR] Failed to save a story to user id:", req.params.id);
-                return next(new Error("Failed to save the story"));
-            } else if (result.value == null) {
-                return next(new Error("Story already exists, or the limit is reached."));
-            } else {
-                res.status(200).json(result.value);
+            } else if (result.savedStories.length >= MAX_FILTER_STORIES) {
+                return next(new Error("Saved stories reached maximum limit"));
             }
+            // add story
+            req.db.collection.findOneAndUpdate({
+                type: 'USER_TYPE',
+                _id: ObjectID(req.auth.userId),
+            }, {
+                $addToSet: {
+                    savedStories: req.body
+                }
+            }, {
+                returnOriginal: false
+            }, function(err, result) {
+                if (err) {
+                    console.log("[ERROR] Failed to save a story to user id:", req.params.id);
+                    console.log("[ERROR] -- error:", err);
+                    return next(err);
+                } else if (!result) {
+                    return next(new Error("User was not found."));
+                } else if (result.ok != 1) {
+                    console.log("[ERROR] Failed to save a story to user id:", req.params.id);
+                    return next(new Error("Failed to save the story"));
+                } else if (result.value == null) {
+                    return next(new Error("Story already exists, or the limit is reached."));
+                } else {
+                    res.status(200).json(result.value);
+                }
+            });
         });
+
     });
 });
 
@@ -274,8 +279,6 @@ router.delete('/:id/savedstories/:sid', authHelper.checkAuth, function(req, res,
     if (req.params.id != req.auth.userId) {
         return next(new Error("Invalid request for deleting stories"));
     }
-    // the story id has to be unique, otherwise application
-    // will fail, resulting in incorrect savedStoriesCount
     req.db.collection.findOneAndUpdate({
         type: 'USER_TYPE',
         _id: ObjectID(req.auth.userId)
@@ -284,9 +287,6 @@ router.delete('/:id/savedstories/:sid', authHelper.checkAuth, function(req, res,
             savedStories: {
                 storyID: req.params.sid
             }
-        },
-        $inc: {
-            savedStoriesCount: -1
         }
     }, {
         returnOriginal: false
@@ -321,7 +321,6 @@ function createUserDocument(displayName, email, passwordHash) {
             requireWIFI: true,
             enableAlerts: false
         },
-        savedStoriesCount: 0,
         savedStories: [],
         newsFilters: [
             {
