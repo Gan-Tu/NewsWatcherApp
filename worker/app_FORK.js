@@ -76,7 +76,7 @@ process.on("message", function(msg) {
 function refreshStories(user, callback) {
     if (!globalNewsDoc) {
         db.collection.findOne({
-            _id: ObjectID(process.env.GLOBAL_STORIES_ID),
+            type: "GLOBALSTORY_TYPE"
         }, function(err, doc) {
             if (err) {
                 console.log("[ERROR] Forked worker failed to fetch global story: ", err);
