@@ -140,7 +140,7 @@ router.put('/:id', authHelper.checkAuth, function(req, res, next) {
         }
         // validate keyword filters, asynchronously
         async.eachSeries(req.body.newsFilters, function(filter, callback) {
-            joi.validate(filter, schema.NEWS_FILTER, err => callback(err));
+            joi.validate(filter, schema.NEWSFILTER, err => callback(err));
         }, function(err) {
             // MongoDB implements optimistic concurrency for us.
             // We were not holding on to the document anyway, so we just do a quick
@@ -297,7 +297,7 @@ router.delete('/:id/savedstories/:sid', authHelper.checkAuth, function(req, res,
             console.log("[ERROR] -- error:", err);
             return next(err);
         } else if (!result) {
-            return next(new Error("User was not found."));
+            return next(new Error("User or story was not found."));
         } else if (result.ok != 1) {
             console.log("[ERROR] Failed to delete story %d from user id %d",
                         req.params.sid, req.params.id);
