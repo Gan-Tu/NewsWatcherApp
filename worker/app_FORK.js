@@ -55,10 +55,12 @@ function interrupt_cleanup(err) {
 /** Cross Process Communication */
 process.on("message", function(msg) {
     if (msg.command) {
+        console.log("[INFO] Forked worker received command %s for user %s",
+                    msg.command, msg.user._id);
         if (msg.command == "REFRESH_STORIES") {
-            setImmediate(function(doc) {
-                refreshStoriesMSG(doc, null)
-            }, msg.doc);
+            setImmediate(function(user) {
+                refreshStories(user, null)
+            }, msg.user);
         }
     } else {
         console.log("[WARNING] Forked worker received malformed message from server.");
@@ -70,8 +72,8 @@ process.on("message", function(msg) {
 /** Child process procedures */
 
 // ensure the global news document is initialized
-// before `fetchStories` is called
-function refreshStories(doc, callback) {
+// before `refreshStoriesFromGlobalDoc` is called
+function refreshStories(user, callback) {
     if (!globalNewsDoc) {
         db.collection.findOne({
             _id: ObjectID(process.env.GLOBAL_STORIES_ID),
@@ -85,16 +87,83 @@ function refreshStories(doc, callback) {
                 }
             } else {
                 globalNewsDoc = doc;
-                return fetchStories(doc, callback);
+                return refreshStoriesFromGlobalDoc(user, callback);
             }
         })
     } else {
-        return fetchStories(doc, callback);
+        return refreshStoriesFromGlobalDoc(user, callback);
     }
 }
 
-// actual work for fetching stories
-function fetchStories(doc, callback) {
 
+// actual work for fetching stories
+function refreshStoriesFromGlobalDoc(user, callback) {
+    var totalNewsAdded = 0;
+
+    // loop through all news filters and seek matches for all returned stories
+    for (var filterIdx = 0; filterIdx < user.newsFilters.length; filterIdx++) {
+        var filter = user.newsFilters[filterIdx];
+        var matchedNewStories = [];
+
+        // we populate our new list by checking each new story in global document
+        // against the keywords of the current filter for the user
+        for (var i = 0; i < globalNewsDoc.newsStories.length; i++) {
+            var story = globalNewsDoc.newsStories[i];
+            // if the story matches any keyword in the current filter
+            // we select the story as a candidate
+            for (var j = 0; j < filter.keyWords.length; j++) {
+                var keyword =  filter.keyWords[j].toLowerCase();
+                if (storyMatchesKeyword(story, keyword)) {
+                    matchedNewStories.push(story);
+                    totalNewsAdded++;
+                    break;
+                }
+            }
+            // we stop looking for new stories, if we have reached the limit
+            if (matchedNewStories.length == process.env.MAX_FILTER_STORIES) {
+                break;
+            }
+        }
+        // we push new found stories for the user, and keep the old ones if necessary
+        // so as to limit the total number of stories to the maximum
+        filter.newsStories = filter.newsStories.concat(matchedNewStories);
+        filter.newsStories = filter.newsStories.slice(0, process.env.MAX_FILTER_STORIES);
+    }
+
+    // write update stories to database
+    db.collection.findOneAndUpdate({
+        _id: ObjectID(user._id)
+    }, {
+        $set: {
+            "newsFilters": user.newsFilters
+        }
+    }, {
+        returnOriginal: false
+    }, function(err, result) {
+        if (err) {
+            console.log("[ERROR] Forked worker failed to update news due to:", err)
+        } else if (!result) {
+            err = new Error("[ERROR] Forked worker failed to update news b/c User was not found");
+        } else if (result.ok != 1) {
+            console.log("[ERROR] Forked worker failed to update news for user: ", user._id);
+            err = new Error("Forked child failed to update news for user");
+        } else if (user.newsFilters.length > 0) {
+            console.log("[INFO] %d news in total are added for user %s",totalNewsAdded, user._id);
+        } else {
+            console.log("[WARNING] No news is added because user has no filters.");
+        }
+        if (callback) {
+            return callback(err);
+        }
+    })
 }
+
+/** Utility functions */
+function storyMatchesKeyword(story, keyword) {
+    var title   =  story.title.toLowerCase();
+    var content =  story.contentSnippet.toLowerCase()
+    return title.indexOf(keyword) >= 0 ||
+           content.indexOf(keyword) >= 0;
+}
+
 

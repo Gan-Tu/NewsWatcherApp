@@ -99,7 +99,6 @@ const NEWS_STORY = {
     date:           joi.date().required(),
     hours:          joi.string().max(20),
     imageUrl:       joi.string().max(300).required(),
-    keep:           joi.boolean().required(),
     link:           joi.string().max(300).required(),
     source:         joi.string().max(50).required(),
     storyID:        joi.string().max(100).required(),
