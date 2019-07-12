@@ -4,13 +4,13 @@ var joi = require('joi');
 
 /*
  * Valid schema for password:
- * - 7 to 15 characters in length
+ * - 7 to 20 characters in length
  * - contain at least one numeric digit
  * - contain at least one uppercase letter
  * - contain at least one lowercase letter
  */
 const PASSWORD = joi.string()
-                    .regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{7,15}$/);
+                    .regex(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{7,20}$/);
 
 /*
  * Valid schema for email:
