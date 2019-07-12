@@ -33,7 +33,7 @@ const DISPLAY_NAME = joi.string()
  * - contains only alphanumeric characters, whitespace, or -
  * - 1 to 30 characters
  */
-const NEWS_FILTER = joi.string()
+const NEWSFILTER_NAME = joi.string()
                        .regex(/^[-_a-zA-Z0-9]{1,30}$/);
 
 /*
@@ -76,7 +76,7 @@ const UPDATE_USER = {
  * - keyWords: at most 10 keywords per filter supported
  */
 const NEWSFILTER = {
-    name:               NEWS_FILTER.required(),
+    name:               NEWSFILTER_NAME.required(),
     keyWords:           joi.array()
                            .max(10)
                            .items(joi.string().trim().max(20))
@@ -127,7 +127,7 @@ module.exports.PASSWORD = PASSWORD;
 module.exports.EMAIL = EMAIL;
 module.exports.DISPLAY_NAME = DISPLAY_NAME;
 module.exports.COMMENT = COMMENT;
-module.exports.NEWS_FILTER = NEWS_FILTER;
+module.exports.NEWSFILTER_NAME = NEWSFILTER_NAME;
 module.exports.SESSION_BODY = SESSION_BODY;
 module.exports.CREATE_USER = CREATE_USER;
 module.exports.UPDATE_USER = UPDATE_USER;
