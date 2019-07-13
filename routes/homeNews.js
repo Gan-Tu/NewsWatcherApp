@@ -7,7 +7,7 @@ var router = express.Router();
 // get all top news when application UI is first seen by the user
 router.get('/', function(req, res, next){
     req.db.collection.findOne({
-        _id: ObjectID(process.env.GLOBAL_STORIES_ID)
+        type: "GLOBALSTORY_TYPE"
     }, {
         homeNewsStories: 1
     }, function(err, doc) {
