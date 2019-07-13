@@ -9,11 +9,11 @@ const schema = require("../routes/schema");
 const PASSWORD_SALT_ROUNDS = parseInt(process.env.PASSWORD_SALT_ROUNDS) || 10;
 
 // seeding configuration
-const FAKE_USER_COUNT = 10;
+const FAKE_USER_COUNT = 15;
 const FAKE_GLOBAL_STORIE_COUNT = 5;
 const FAKE_FILTER_PER_USER = 3;
 const FAKE_KEYWORDS_PER_FILTER = 2;
-const FAKE_STORIES_PER_FILTER = 3;
+const FAKE_STORIES_PER_FILTER = 2;
 const FAKE_PASSWORD_HASH = // "PasswordExample123"
     "$2a$10$MDcxiCpABabSt/wGRILSSONMfRqn1dP5zATePeJeHzDIXDuTxAlaq";
 

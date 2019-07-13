@@ -24,6 +24,8 @@ const NEWS_CATEGORIES = [
     "technology"
 ]
 const MAX_GLOBAL_STORIES = parseInt(process.env.MAX_GLOBAL_STORIES) || 300;
+const POPULATE_STORY_INTERVAL_HOURS =
+    parseInt(process.env.POPULATE_STORY_INTERVAL_HOURS) || 6;
 
 /** Database Connection */
 var db = {}
@@ -155,6 +157,7 @@ function populateNews() {
     console.log("[INFO] Start populating news at:", Date.now());
     var articles = [];
     async.eachSeries(NEWS_CATEGORIES, function(keyword, callback) {
+        console.log("[INFO] Fetching stories with keyword:", keyword);
         https.get({
             host: "newsapi.org",
             path: "/v2/top-headlines?country=us&pageSize=20&category=" + keyword,
@@ -233,6 +236,7 @@ function populateNews() {
     })
 }
 
+// refresh stories for all users
 function refreshStoriesForAllUsers() {
     var cursor = db.collection.find({ type: "USER_TYPE" });
     console.log("[INFO] Forked worker starts updating stories of all Users");
@@ -333,8 +337,11 @@ function getStoryDoc(story) {
 }
 
 /** Interval Procedures. */
-// populate every 6 hours (6 hours * 60 min/hour * 60 secs/min * 1000 milliseconds/sec`)
-var populateNewsBackgroundTimer = setInterval(populateNews, 6*60*60*1000);
+
+// populate every X hours (X hours * 60 min/hour * 60 secs/min * 1000 milliseconds/sec`)
+var populateNewsBackgroundTimer =
+    setInterval(populateNews,
+                POPULATE_STORY_INTERVAL_HOURS*60*60*1000);
 
 
 
