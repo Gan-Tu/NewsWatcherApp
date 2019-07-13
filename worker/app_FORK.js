@@ -225,9 +225,39 @@ function populateNews() {
             } else {
                 console.log('[INFO] Forked worker successfully populated news');
                 globalNewsDoc = result.value;
+                setImmediate(function() {
+                    refreshStoriesForAllUsers();
+                });
             }
         });
     })
+}
+
+function refreshStoriesForAllUsers() {
+    var cursor = db.collection.find({ type: "USER_TYPE" });
+    console.log("[INFO] Forked worker starts updating stories of all Users");
+    var done = false;
+    async.doWhilst(function(callback) {
+        cursor.next(function(err, user) {
+            if (err) {
+                return callback(err);
+            } else if (user) {
+                refreshStories(user, function(err) {
+                    return callback(err);
+                })
+            } else { // when user == null. we are done
+                console.log("[INFO] Forked worker finished updating all Users.");
+                done = true;
+                callback();
+            }
+        });
+    }, function() {
+        return !done;
+    }, function(err) {
+        if (err) {
+            console.log("[ERROR] Forked worker encountered error:", err);
+        }
+    });
 }
 
 /** Utility functions */
