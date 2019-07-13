@@ -26,6 +26,9 @@ const NEWS_CATEGORIES = [
 const MAX_GLOBAL_STORIES = parseInt(process.env.MAX_GLOBAL_STORIES) || 300;
 const POPULATE_STORY_INTERVAL_HOURS =
     parseInt(process.env.POPULATE_STORY_INTERVAL_HOURS) || 6;
+const DELETE_SHARED_STORY_INTERVAL_HOURS =
+    parseInt(process.env.DELETE_SHARED_STORY_INTERVAL_HOURS) || 15;
+const EXPIRE_DAYS = parseInt(process.env.EXPIRE_DAYS) || 2;
 
 /** Database Connection */
 var db = {}
@@ -40,6 +43,7 @@ MongoClient.connect(process.env.MONGODB_CONNECT_URL,
     console.log("[INFO] Forked worker successfully connected to MongoDB database.");
     // whenever we start, we repopulate news
     initGlobalDoc(populateNews);
+    initGlobalDoc(deleteOldSharedNews);
 });
 
 // gracefully close the database connections
@@ -58,6 +62,8 @@ function interrupt_cleanup(err) {
     }
     clearInterval(populateNewsBackgroundTimer);
     console.log("[INFO] Cleared news population interval timer.");
+    clearInterval(deleteOldSharedNewsTimer);
+    console.log("[INFO] Cleared expired story deletion interval timer.");
     process.kill(process.pid);
 }
 
@@ -252,7 +258,7 @@ function refreshStoriesForAllUsers() {
             } else { // when user == null. we are done
                 console.log("[INFO] Forked worker finished updating all Users.");
                 done = true;
-                callback();
+                return callback();
             }
         });
     }, function() {
@@ -261,6 +267,45 @@ function refreshStoriesForAllUsers() {
         if (err) {
             console.log("[ERROR] Forked worker encountered error:", err);
         }
+    });
+}
+
+// delete shared news periodically
+function deleteOldSharedNews() {
+    console.log("[INFO] Forked worker starts fetching all shared stories");
+    var cursor = db.collection.find({
+        type: "SHAREDSTORY_TYPE"
+    }).toArray(function(err, stories) {
+        if (err) {
+            console.log("[ERROR] Forked worker encountered error:", err);
+            return;
+        }
+        console.log("[INFO] Forked worker fetched all old shared stories");
+        console.log("[INFO] Forked worker starts deleting old shared stories");
+        async.eachSeries(stories, function(story, callback) {
+            if (sharedStoryHasExpired(story)) {
+                db.collection.findOneAndDelete({
+                    type: "SHAREDSTORY_TYPE",
+                    _id: ObjectID(story._id)
+                }, function(err, result) {
+                    if (err) {
+                        return callback(err);
+                    } else if (!result) {
+                        return callback(new Error("Failed to delete story: " + story._id));
+                    } else {
+                        console.log("[INFO] Forked worker deleted story:", story._id);
+                        return callback();
+                    }
+                });
+            } else {
+                return callback();
+            }
+        }, function(err) {
+            if (err) {
+                console.log("[ERROR] Forked worker encountered error:", err);
+            }
+            console.log("[INFO] Forked worker finished deleting old shared stories.");
+        });
     });
 }
 
@@ -302,7 +347,8 @@ function getStoryDoc(story) {
         story.title.length == 0 ||
         !story.publishedAt ||
         story.publishedAt.length == 0 ||
-        !story.url) {
+        !story.url ||
+        !story.urlToImage) {
         return null;
     }
     // create field
@@ -315,16 +361,12 @@ function getStoryDoc(story) {
             contentSnippet = "<no content found>";
         }
     }
-    var date = story.publishedAt;
+    var date = Date.parse(story.publishedAt);
     var imageUrl = story.urlToImage;
     var link = story.url;
-    if (!imageUrl || imageUrl.length > 500) {
-        imageUrl = "";
-    } else if (!link || link.length > 500) {
-        link = "";
-    }
     var source = story.source.name;
     var storyID = uuid(story.url, process.env.STORY_UUID_NAMESPAE);
+    storyID = storyID.replace(/-/g, "").slice(0, 24);
     return {
         title: title,
         contentSnippet: contentSnippet,
@@ -336,6 +378,17 @@ function getStoryDoc(story) {
     }
 }
 
+function sharedStoryHasExpired(doc) {
+    if (doc && doc.story && doc.story.date) {
+        var currentTime = Date.now();
+        var storyTime = doc.story.date;
+        var diff = currentTime - storyTime;
+        return diff > EXPIRE_DAYS*24*60*60*1000;
+    }
+    return false;
+}
+
+
 /** Interval Procedures. */
 
 // populate every X hours (X hours * 60 min/hour * 60 secs/min * 1000 milliseconds/sec`)
@@ -343,5 +396,7 @@ var populateNewsBackgroundTimer =
     setInterval(populateNews,
                 POPULATE_STORY_INTERVAL_HOURS*60*60*1000);
 
-
+var deleteOldSharedNewsTimer =
+    setInterval(deleteOldSharedNews,
+                DELETE_SHARED_STORY_INTERVAL_HOURS*60*60*1000);
 
