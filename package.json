@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "reset": "node worker/reset_db.js && node worker/seed_db.js",
     "test": "NODE_ENV=test mocha --delay"
   },
   "keywords": [
