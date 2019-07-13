@@ -64,7 +64,7 @@ function interrupt_cleanup(err) {
     console.log("[INFO] Cleared news population interval timer.");
     clearInterval(deleteOldSharedNewsTimer);
     console.log("[INFO] Cleared expired story deletion interval timer.");
-    process.kill(process.pid);
+    process.exit(0);
 }
 
 
@@ -206,6 +206,16 @@ function populateNews() {
         }
         var storyDocs = articles.map(story => getStoryDoc(story))
                                 .filter(story => story != null);
+        // remove duplicates
+        var exists = new Set([]);
+        var uniqueStoryDocs = [];
+        for(var k = 0; k < storyDocs.length; k++) {
+            if (!exists.has(storyDocs[k].storyID)) {
+                exists.add(storyDocs[k].storyID);
+                uniqueStoryDocs.push(storyDocs[k]);
+            }
+        }
+        storyDocs = uniqueStoryDocs;
         // save to global stories
         if (globalNewsDoc) {
             // don't add duplicate stories

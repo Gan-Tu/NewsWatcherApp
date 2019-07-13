@@ -149,7 +149,7 @@ function interrupt_cleanup(err) {
         node2.kill();
         console.log('[INFO] ... Background worker gracefully killed.');
     }
-    process.kill(process.pid);
+    process.exit(0);
 }
 
 // set the database connection for middleware usage
