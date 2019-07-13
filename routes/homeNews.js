@@ -9,7 +9,7 @@ router.get('/', function(req, res, next){
     req.db.collection.findOne({
         type: "GLOBALSTORY_TYPE"
     }, {
-        homeNewsStories: 1
+        newsStories: 1
     }, function(err, doc) {
         if (err) {
             return next(err);
@@ -18,7 +18,7 @@ router.get('/', function(req, res, next){
                 `Cannot fetch global stories using id: ${GLOBAL_STORIES_ID}`
             ));
         }
-        res.status(200).json(doc.homeNewsStories);
+        res.status(200).json(doc.newsStories);
     })
 });
 

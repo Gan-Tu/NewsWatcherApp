@@ -92,8 +92,7 @@ function seed_global_doc(callback) {
         } else if (!result) {
             db.collection.insertOne({
                 type: "GLOBALSTORY_TYPE",
-                newsStories: [],
-                homeNewsStories: []
+                newsStories: []
             }, function(err) {
                 if (err) {
                     console.log('[INFO] Failed to create global story document.');
