@@ -31,7 +31,7 @@ const TECH_DOC =  {
     imageUrl:       "http://example.com/image.jpg",
     link:           "http://example.com/url",
     source:         "test example",
-    storyID:        "a6967247-d753-4930-89e6-5d5af0116a2b"
+    storyID:        "a6967247d753493089e65d5a"
 }
 
 // fake keywords generated
@@ -249,6 +249,7 @@ function fakeNewsFilter() {
 
 /** Create a fake story. */
 function fakeStory() {
+    var storyID = faker.random.uuid().replace(/-/g, "").slice(0, 24);
     return {
         title:          faker.random.words(),
         contentSnippet: faker.lorem.paragraph(),
@@ -256,7 +257,7 @@ function fakeStory() {
         imageUrl:       faker.internet.url(),
         link:           faker.internet.url(),
         source:         faker.random.words(),
-        storyID:        faker.random.uuid()
+        storyID:        storyID
     }
 }
 
