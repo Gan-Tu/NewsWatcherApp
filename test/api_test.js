@@ -32,8 +32,8 @@ setTimeout(function() {
                 it("should login successfully with correct credentials", function(done) {
                     request.post("/api/session")
                            .send({
-                                "email": "hello@example.com",
-                                "password": "8_LRdb-*793u"
+                                "email": "test@example.com",
+                                "password": "PasswordExample123"
                             })
                            .end(function(err, res) {
                                 assert.equal(res.status, 200);
