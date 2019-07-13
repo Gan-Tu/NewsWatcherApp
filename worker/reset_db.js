@@ -16,10 +16,17 @@ var dbClient;
 
 // connect to database
 MongoClient.connect(process.env.MONGODB_CONNECT_URL, function(err, client) {
+    if (err) {
+        console.log("[ERROR] Cannot connect to database");
+        return;
+    }
     dbClient = client;
     var db = client.db(DATABASE_NAME);
     // drop any existing database
     db.dropCollection(COLLECTION_NAME, function(err, ok) {
+        if (err || !ok) {
+            console.log("[ERROR] Error encountered when dropping collection", err);
+        }
         console.log("[INFO] Successfully dropped collection:", COLLECTION_NAME);
         // create collection
         db.createCollection(COLLECTION_NAME, function(err, collection) {

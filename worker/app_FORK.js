@@ -1,5 +1,4 @@
 "use strict";
-var bcrypt = require('bcryptjs');
 var https = require('https');
 var async = require('async');
 var assert = require('assert');
@@ -283,7 +282,7 @@ function refreshStoriesForAllUsers() {
 // delete shared news periodically
 function deleteOldSharedNews() {
     console.log("[INFO] Forked worker starts fetching all shared stories");
-    var cursor = db.collection.find({
+    db.collection.find({
         type: "SHAREDSTORY_TYPE"
     }).toArray(function(err, stories) {
         if (err) {

@@ -1,7 +1,6 @@
 /** A node module for home stories management. */
 "use strict";
 var express = require('express');
-var ObjectID = require('mongodb').ObjectID;
 var router = express.Router();
 
 // get all top news when application UI is first seen by the user
@@ -14,9 +13,7 @@ router.get('/', function(req, res, next){
         if (err) {
             return next(err);
         } else if (!doc) {
-            return next(new Error(
-                `Cannot fetch global stories using id: ${GLOBAL_STORIES_ID}`
-            ));
+            return next(new Error("Cannot fetch global stories"));
         }
         res.status(200).json(doc.newsStories);
     })

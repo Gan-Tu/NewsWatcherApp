@@ -1,12 +1,7 @@
 /** Seed database for the News Watcher App. */
 "use strict";
-var ObjectID = require('mongodb').ObjectID;
 var faker = require('faker');
 var assert = require('assert');
-var bcrypt = require('bcryptjs'); // password hash comparison
-
-const schema = require("../routes/schema");
-const PASSWORD_SALT_ROUNDS = parseInt(process.env.PASSWORD_SALT_ROUNDS) || 10;
 
 // seeding configuration
 const FAKE_USER_COUNT = 15;
@@ -207,10 +202,6 @@ function createUserDocument(displayName, email, passwordHash) {
 
 /** Create a fake user */
 function fakeUserDocument() {
-    var displayName = faker.name.findName();
-    var email = faker.internet.email();
-    var passwordHash = faker.internet.password();
-
     return {
         type: 'USER_TYPE',
         displayName: faker.name.findName(),

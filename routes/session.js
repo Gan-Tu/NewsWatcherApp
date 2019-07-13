@@ -17,7 +17,7 @@ var router = express.Router();
  * The user email and password are sent in the body of the request.
  */
 router.post('/', function(req, res, next) {
-    joi.validate(req.body, schema.SESSION_BODY, function(err, unused) {
+    joi.validate(req.body, schema.SESSION_BODY, function(err) {
         if (err) {
             return next(new Error("Invalid request for login"));
         }

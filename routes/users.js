@@ -7,7 +7,6 @@ var joi = require('joi'); // data validation
 var authHelper = require('./authHelper');
 var schema = require('./schema');
 var ObjectID = require('mongodb').ObjectID;
-var Int32 = require('mongodb').Int32;
 
 var router = express.Router();
 
@@ -150,6 +149,9 @@ router.put('/:id', authHelper.checkAuth, function(req, res, next) {
             // because we will force that to update as part of this operation.
             // We need the new document, so a test could verify what happened,
             // otherwise the default is to return the original document.
+            if (err) {
+                return next(err);
+            }
             req.body.newsFilters = cleanNewsFilters(req.body.newsFilters);
             req.db.collection.findOneAndUpdate({
                 type: 'USER_TYPE',
