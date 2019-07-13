@@ -3,6 +3,7 @@ var bcrypt = require('bcryptjs');
 var https = require('https');
 var async = require('async');
 var assert = require('assert');
+var uuid = require('uuid/v5');
 var ObjectID = require('mongodb').ObjectID;
 
 // import environment secrets
@@ -11,15 +12,18 @@ if (process.env.PRODUCTION !== 'production') {
     require('dotenv').config();
 }
 
-
 var globalNewsDoc;
-const NYT_CATEGORIES = [
-    "home",
-    "world",
-    "national",
+const NEWS_CATEGORIES = [
+    "general",
+    "politics",
     "business",
+    "entertainment",
+    "health",
+    "science",
+    "sports",
     "technology"
 ]
+const MAX_GLOBAL_STORIES = parseInt(process.env.MAX_GLOBAL_STORIES) || 300;
 
 /** Database Connection */
 var db = {}
@@ -32,6 +36,8 @@ MongoClient.connect(process.env.MONGODB_CONNECT_URL,
     db.client = client;
     db.collection = client.db('newswatcherdb').collection('newswatcher');
     console.log("[INFO] Forked worker successfully connected to MongoDB database.");
+    // whenever we start, we repopulate news
+    initGlobalDoc(populateNews);
 });
 
 // gracefully close the database connections
@@ -48,6 +54,8 @@ function interrupt_cleanup(err) {
         db.client.close();
         console.log("[INFO] ... Forked worker's database connection gracefully closed.");
     }
+    clearInterval(populateNewsBackgroundTimer);
+    console.log("[INFO] Cleared news population interval timer.");
     process.kill(process.pid);
 }
 
@@ -59,7 +67,9 @@ process.on("message", function(msg) {
                     msg.command, msg.user._id);
         if (msg.command == "REFRESH_STORIES") {
             setImmediate(function(user) {
-                refreshStories(user, null)
+                initGlobalDoc(function callback() {
+                    refreshStories(user, null);
+                });
             }, msg.user);
         }
     } else {
@@ -71,33 +81,8 @@ process.on("message", function(msg) {
 
 /** Child process procedures */
 
-// ensure the global news document is initialized
-// before `refreshStoriesFromGlobalDoc` is called
-function refreshStories(user, callback) {
-    if (!globalNewsDoc) {
-        db.collection.findOne({
-            type: "GLOBALSTORY_TYPE"
-        }, function(err, doc) {
-            if (err) {
-                console.log("[ERROR] Forked worker failed to fetch global story: ", err);
-                if (callback) {
-                    return callback(err);
-                } else {
-                    return;
-                }
-            } else {
-                globalNewsDoc = doc;
-                return refreshStoriesFromGlobalDoc(user, callback);
-            }
-        })
-    } else {
-        return refreshStoriesFromGlobalDoc(user, callback);
-    }
-}
-
-
 // actual work for fetching stories
-function refreshStoriesFromGlobalDoc(user, callback) {
+function refreshStories(user, callback) {
     var totalNewsAdded = 0;
 
     // loop through all news filters and seek matches for all returned stories
@@ -165,12 +150,161 @@ function refreshStoriesFromGlobalDoc(user, callback) {
     })
 }
 
+// populate master news list
+function populateNews() {
+    console.log("[INFO] Start populating news at:", Date.now());
+    var articles = [];
+    async.eachSeries(NEWS_CATEGORIES, function(keyword, callback) {
+        https.get({
+            host: "newsapi.org",
+            path: "/v2/top-headlines?country=us&pageSize=20&category=" + keyword,
+            headers: {
+                "x-api-key": process.env.NEWS_API_KEY
+            }
+        }, function(res) {
+            // get results
+            var body = "";
+            res.on("data", function(data) {
+                body += data;
+            });
+            res.on('end', function() {
+                if (res.statusCode != 200) {
+                    console.log('[ERROR] Forked worker (%d) failed to fetch stories with keyword %s', res.statusCode, keyword);
+                    return callback(new Error("Failed to fetch stories"));
+                }
+                try {
+                    var response = JSON.parse(body);
+                    if (response.status != "ok") {
+                        console.log("[ERROR] Forked worker failed to fetch stories due to", response.message);
+                        return callback(new Error("Failed to fetch stories"));
+                    }
+                    articles = articles.concat(response.articles);
+                    return callback();
+                } catch (err) {
+                    console.log(err);
+                    // return callback(new Error("[ERROR] Failed to parse NewsAPI response."));
+                }
+            })
+        }).on("error", function(err) {
+            console.log('[ERROR] Forked worker: failed to fetch stories with keyword %s', keyword);
+            console.log('[ERROR] Forked worker: err encountered: ', err);
+            return callback(err);
+        })
+    }, function(err) {
+        if (err) {
+            console.log(err);
+            return;
+        }
+        var storyDocs = articles.map(story => getStoryDoc(story))
+                                .filter(story => story != null);
+        // save to global stories
+        if (globalNewsDoc) {
+            // don't add duplicate stories
+            var existingStoryIDs = new Set(globalNewsDoc.newsStories.map(story => story.storyID));
+            storyDocs = storyDocs.filter(story => !existingStoryIDs.has(story.storyID));
+            // concatenate, while capping max number of stories
+            storyDocs = storyDocs.concat(globalNewsDoc.newsStories)
+                                 .slice(0, MAX_GLOBAL_STORIES);
+        }
+        db.collection.findOneAndUpdate({
+            type: "GLOBALSTORY_TYPE",
+        },{
+            $set: {
+                newsStories: storyDocs
+            }
+        }, {
+            returnOriginal: false
+        }, function(err, result) {
+            if (err) {
+                console.log('[ERROR] Forked worker failed to update for global story document:', err);
+            } else if (!result) {
+                console.log('[ERROR] Forked worker failed to update for global story document');
+                console.log('[ERROR] Forked worker: global story document does not exists.');
+            } else if (result.ok != 1) {
+                console.log('[ERROR] Forked worker failed to update for global story document');
+            } else {
+                console.log('[INFO] Forked worker successfully populated news');
+                globalNewsDoc = result.value;
+            }
+        });
+    })
+}
+
 /** Utility functions */
+
+function initGlobalDoc(callback) {
+    if (!globalNewsDoc) {
+        db.collection.findOne({
+            type: "GLOBALSTORY_TYPE"
+        }, function(err, doc) {
+            if (err) {
+                console.log("[ERROR] Forked worker failed to fetch global story: ", err);
+                if (callback) {
+                    return callback(err);
+                }
+            } else {
+                globalNewsDoc = doc;
+                if (callback) {
+                    return callback();
+                }
+            }
+        })
+    } else if (callback) {
+        return callback();
+    }
+}
+
 function storyMatchesKeyword(story, keyword) {
     var title   =  story.title.toLowerCase();
     var content =  story.contentSnippet.toLowerCase()
     return title.indexOf(keyword) >= 0 ||
            content.indexOf(keyword) >= 0;
 }
+
+function getStoryDoc(story) {
+    // sanity check
+    if (!story ||
+        !story.title ||
+        story.title.length == 0 ||
+        !story.publishedAt ||
+        story.publishedAt.length == 0 ||
+        !story.url) {
+        return null;
+    }
+    // create field
+    var title = story.title;
+    var contentSnippet = story.description;
+    if (!contentSnippet) {
+        if (story.content) {
+            contentSnippet = story.content.slice(0, 700);
+        } else {
+            contentSnippet = "<no content found>";
+        }
+    }
+    var date = story.publishedAt;
+    var imageUrl = story.urlToImage;
+    var link = story.url;
+    if (!imageUrl || imageUrl.length > 500) {
+        imageUrl = "";
+    } else if (!link || link.length > 500) {
+        link = "";
+    }
+    var source = story.source.name;
+    var storyID = uuid(story.url, process.env.STORY_UUID_NAMESPAE);
+    return {
+        title: title,
+        contentSnippet: contentSnippet,
+        date: date,
+        imageUrl: imageUrl,
+        link: link,
+        source: source,
+        storyID: storyID
+    }
+}
+
+/** Interval Procedures. */
+// populate every 6 hours (6 hours * 60 min/hour * 60 secs/min * 1000 milliseconds/sec`)
+var populateNewsBackgroundTimer = setInterval(populateNews, 6*60*60*1000);
+
 
 

@@ -97,9 +97,9 @@ const NEWSFILTER = {
 const NEWS_STORY = {
     contentSnippet: joi.string().max(700).required(),
     date:           joi.date().required(),
-    imageUrl:       joi.string().max(300).required(),
-    link:           joi.string().max(300).required(),
-    source:         joi.string().max(50).required(),
+    imageUrl:       joi.string().max(500).required(),
+    link:           joi.string().max(500).required(),
+    source:         joi.string().max(100).required(),
     storyID:        joi.string().max(100).required(),
     title:          joi.string().max(300).required()
 }
