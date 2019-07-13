@@ -10,7 +10,7 @@ const PASSWORD_SALT_ROUNDS = parseInt(process.env.PASSWORD_SALT_ROUNDS) || 10;
 
 // seeding configuration
 const FAKE_USER_COUNT = 10;
-const FAKE_GLOBAL_STORIE_COUNT = 25;
+const FAKE_GLOBAL_STORIE_COUNT = 5;
 const FAKE_FILTER_PER_USER = 3;
 const FAKE_KEYWORDS_PER_FILTER = 2;
 const FAKE_STORIES_PER_FILTER = 3;
@@ -56,7 +56,10 @@ MongoClient.connect(process.env.MONGODB_CONNECT_URL, function(err, client) {
     // seed database
     seed_global_doc(function() {
         seed_example_global_stories(function() {
-            seed_example_users(null);
+            seed_example_users(function() {
+                interrupt_cleanup();
+                process.exit();
+            });
         });
     });
 });
