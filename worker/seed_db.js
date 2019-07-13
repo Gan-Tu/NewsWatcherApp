@@ -252,7 +252,7 @@ function fakeStory() {
     return {
         title:          faker.random.words(),
         contentSnippet: faker.lorem.paragraph(),
-        date:           faker.date.past(),
+        date:           Date.parse(faker.date.past()),
         imageUrl:       faker.internet.url(),
         link:           faker.internet.url(),
         source:         faker.random.words(),
