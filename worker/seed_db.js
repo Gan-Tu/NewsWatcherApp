@@ -58,7 +58,6 @@ MongoClient.connect(process.env.MONGODB_CONNECT_URL, function(err, client) {
         seed_example_global_stories(function() {
             seed_example_users(function() {
                 interrupt_cleanup();
-                process.exit();
             });
         });
     });
@@ -77,7 +76,7 @@ function interrupt_cleanup(err) {
         db.client.close();
         console.log("[INFO] ... Database connection gracefully closed.");
     }
-    process.kill(process.pid);
+    process.exit(0);
 }
 
 

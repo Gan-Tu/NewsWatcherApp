@@ -52,7 +52,6 @@ MongoClient.connect(process.env.MONGODB_CONNECT_URL, function(err, client) {
                 console.log("[INFO] Successfully created index");
                 // leave process
                 interrupt_cleanup();
-                process.exit();
             });
         })
     })
@@ -71,5 +70,5 @@ function interrupt_cleanup(err) {
         dbClient.close();
         console.log("[INFO] ... Database connection gracefully closed.");
     }
-    process.kill(process.pid);
+    process.exit(0);
 }
