@@ -32,6 +32,7 @@
     "immutability-helper": "^2.7.0",
     "joi": "^13.7.0",
     "jwt-simple": "^0.5.6",
+    "loadtest": "^3.0.7",
     "mocha": "^6.1.4",
     "mongodb": "^3.2.7",
     "morgan": "^1.9.1",
