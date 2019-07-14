@@ -6,7 +6,8 @@
     },
     "extends": [
         // "google",
-        "eslint:recommended"
+        "eslint:recommended",
+        "react-app"
     ],
     "globals": {
         "Atomics": "readonly",
@@ -22,5 +23,6 @@
         "react"
     ],
     "rules": {
+        "no-console": "off"
     }
 }
