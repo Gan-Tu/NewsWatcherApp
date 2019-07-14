@@ -40,8 +40,8 @@ MongoClient.connect(process.env.MONGODB_CONNECT_URL,
     db.client = client;
     db.collection = client.db('newswatcherdb').collection('newswatcher');
     console.log("[INFO] Forked worker successfully connected to MongoDB database.");
-    // whenever we start, we repopulate news and purge old shared news
-    if (process.env.NODE_ENV !== "test") {
+    // whenever we start in production, we repopulate news and purge old shared news
+    if (process.env.NODE_ENV === "production") {
         initGlobalDoc(populateNews);
         initGlobalDoc(deleteOldSharedNews);
     }
