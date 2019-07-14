@@ -1,5 +1,5 @@
 /** A node module for shared news stories management. */
-"use strict";
+
 var express = require('express');
 var joi = require('joi'); // data validation
 var authHelper = require('./authHelper');
@@ -85,7 +85,7 @@ router.get('/', authHelper.checkAuth, function(req, res, next) {
  * so we use a very NAIVE way for restricting access
  */
 router.delete('/:sid', authHelper.checkAuth, function(req, res, next) {
-    if (req.query.admin_token != process.env.ADMIN_TOKEN) {
+    if (req.query.admin_token !== process.env.ADMIN_TOKEN) {
         // preliminary authentication, for development purpose
         return next(new Error("Only admin can delete comments right now"));
     }
@@ -101,7 +101,7 @@ router.delete('/:sid', authHelper.checkAuth, function(req, res, next) {
             return next(err);
         } else if (!result) {
             return next(new Error("Story was not found."));
-        } else if (result.ok != 1) {
+        } else if (result.ok !== 1) {
             console.log("[ERROR] Failed to delete shared story %d", req.params.sid);
             return next(new Error("Failed to delete the story"));
         } else {
@@ -152,7 +152,7 @@ router.post('/:sid/comments', authHelper.checkAuth, function(req, res, next) {
                     return next(err);
                 } else if (!result) {
                     return next(new Error("Story was not found."));
-                } else if (result.ok != 1) {
+                } else if (result.ok !== 1) {
                     console.log("[ERROR] Failed to post a comment to story:", req.params.sid);
                     return next(new Error("Failed to post comment"));
                 } else {

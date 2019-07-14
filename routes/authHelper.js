@@ -1,5 +1,5 @@
 /** A node module to inject middleware that validates request user token. */
-"use strict";
+
 var jwt = require('jwt-simple'); // token authentication
 
 /**
@@ -19,8 +19,8 @@ module.exports.checkAuth = function(req, res, next) {
                 req.auth.userId && // token should contain userId
                 req.auth.sessionIP &&
                 req.auth.sessionUA) {
-                if (req.auth.sessionIP == req.ip &&
-                    req.auth.sessionUA == req.headers['user-agent']) {
+                if (req.auth.sessionIP === req.ip &&
+                    req.auth.sessionUA === req.headers['user-agent']) {
                     next();
                 } else {
                     console.log("[ERROR] User x-auth token may be compromised.");

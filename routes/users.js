@@ -1,5 +1,5 @@
 /** A node module for user profile management. */
-"use strict";
+
 var express = require('express');
 var bcrypt = require('bcryptjs'); // password hash comparison
 var async = require('async');
@@ -66,7 +66,7 @@ router.post('/', function(req, res, next) {
  */
 router.delete('/:id', authHelper.checkAuth, function(req, res, next) {
     // check that we are deleting the current logged-in user
-    if (req.params.id != req.auth.userId) {
+    if (req.params.id !== req.auth.userId) {
         return next(new Error("Invalid request for account deletion"));
     }
     // MongoDB should queue this up and retry if there is a conflict
@@ -81,7 +81,7 @@ router.delete('/:id', authHelper.checkAuth, function(req, res, next) {
             return next(err);
         } else if (!result) {
             return next(new Error("User was not found."));
-        } else if (result.ok != 1) {
+        } else if (result.ok !== 1) {
             console.log("[ERROR] Failed to delete user id:", req.params.id);
             return next(new Error("Account deletion failed"));
         } else {
@@ -95,7 +95,7 @@ router.delete('/:id', authHelper.checkAuth, function(req, res, next) {
  * User account retrieval
  */
 router.get('/:id', authHelper.checkAuth, function(req, res, next) {
-    if (req.params.id != req.auth.userId) {
+    if (req.params.id !== req.auth.userId) {
         return next(new Error("Invalid request for account fetch"));
     }
     req.db.collection.findOne({
@@ -129,7 +129,7 @@ router.get('/:id', authHelper.checkAuth, function(req, res, next) {
  * User account update
  */
 router.put('/:id', authHelper.checkAuth, function(req, res, next) {
-    if (req.params.id != req.auth.userId) {
+    if (req.params.id !== req.auth.userId) {
         return next(new Error("Invalid request for account update"));
     }
     // validate body as a whole
@@ -173,7 +173,7 @@ router.put('/:id', authHelper.checkAuth, function(req, res, next) {
                     return next(err);
                 } else if (!result) {
                     return next(new Error("User was not found."));
-                } else if (result.ok != 1) {
+                } else if (result.ok !== 1) {
                     console.log("[ERROR] Failed to update user id:", req.params.id);
                     return next(new Error("Account update failed"));
                 } else {
@@ -193,7 +193,7 @@ router.put('/:id', authHelper.checkAuth, function(req, res, next) {
  * Get all stories for the user
  */
 router.get('/:id/savedstories', authHelper.checkAuth, function(req, res, next) {
-    if (req.params.id != req.auth.userId) {
+    if (req.params.id !== req.auth.userId) {
         return next(new Error("Invalid request for getting stories"));
     }
     req.db.collection.findOne({
@@ -219,7 +219,7 @@ router.get('/:id/savedstories', authHelper.checkAuth, function(req, res, next) {
  * Save a story for the user
  */
 router.post('/:id/savedstories', authHelper.checkAuth, function(req, res, next) {
-    if (req.params.id != req.auth.userId) {
+    if (req.params.id !== req.auth.userId) {
         return next(new Error("Invalid request for saving stories"));
     }
     joi.validate(req.body, schema.NEWS_STORY, function(err) {
@@ -259,7 +259,7 @@ router.post('/:id/savedstories', authHelper.checkAuth, function(req, res, next) 
                     return next(err);
                 } else if (!result) {
                     return next(new Error("User was not found."));
-                } else if (result.ok != 1) {
+                } else if (result.ok !== 1) {
                     console.log("[ERROR] Failed to save a story to user id:", req.params.id);
                     return next(new Error("Failed to save the story"));
                 } else if (result.value == null) {
@@ -278,7 +278,7 @@ router.post('/:id/savedstories', authHelper.checkAuth, function(req, res, next) 
  * Delete a story from the user
  */
 router.delete('/:id/savedstories/:sid', authHelper.checkAuth, function(req, res, next) {
-    if (req.params.id != req.auth.userId) {
+    if (req.params.id !== req.auth.userId) {
         return next(new Error("Invalid request for deleting stories"));
     }
     req.db.collection.findOneAndUpdate({
@@ -300,7 +300,7 @@ router.delete('/:id/savedstories/:sid', authHelper.checkAuth, function(req, res,
             return next(err);
         } else if (!result) {
             return next(new Error("User or story was not found."));
-        } else if (result.ok != 1) {
+        } else if (result.ok !== 1) {
             console.log("[ERROR] Failed to delete story %d from user id %d",
                         req.params.sid, req.params.id);
             return next(new Error("Failed to delete the story"));
@@ -352,7 +352,7 @@ function cleanNewsFilters(filters) {
         if ("keyWords" in filters[i]) {
             filters[i].keyWords = filters[i].keyWords
                                             .map(x => x.trim())
-                                            .filter(x => x != "");
+                                            .filter(x => x !== "");
         }
     }
     return filters;

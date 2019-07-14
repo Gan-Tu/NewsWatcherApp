@@ -1,5 +1,5 @@
 /** Reset database for the News Watcher App. */
-"use strict";
+
 
 // import environment secrets
 if (process.env.PRODUCTION !== 'production') {

@@ -1,5 +1,5 @@
 /** Seed database for the News Watcher App. */
-"use strict";
+
 var faker = require('faker');
 var assert = require('assert');
 

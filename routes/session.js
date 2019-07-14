@@ -1,5 +1,5 @@
 /** A node module for session login and logout. */
-"use strict";
+
 var express = require('express');
 var bcrypt = require('bcryptjs'); // password hash comparison
 var jwt = require('jwt-simple'); // token authentication
@@ -75,7 +75,7 @@ router.post('/', function(req, res, next) {
 router.delete('/:id', authHelper.checkAuth, function(req, res, next) {
     // check that we are logging out the current logged-in user by
     // verifying the passed session id is the same as that in the auth token
-    if (req.params.id != req.auth.userId) {
+    if (req.params.id !== req.auth.userId) {
         return next(new Error("Invalid request for logout"));
     }
     res.status(200).json({ msg: "Successfully logged out"});

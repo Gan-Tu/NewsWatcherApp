@@ -1,4 +1,4 @@
-"use strict";
+
 var https = require('https');
 var async = require('async');
 var assert = require('assert');
@@ -74,7 +74,7 @@ process.on("message", function(msg) {
     if (msg.command) {
         console.log("[INFO] Forked worker received command %s for user %s",
                     msg.command, msg.user._id);
-        if (msg.command == "REFRESH_STORIES") {
+        if (msg.command === "REFRESH_STORIES") {
             setImmediate(function(user) {
                 initGlobalDoc(function callback() {
                     refreshStories(user, null);
@@ -121,7 +121,7 @@ function refreshStories(user, callback) {
                 }
             }
             // we stop looking for new stories, if we have reached the limit
-            if (matchedNewStories.length == process.env.MAX_FILTER_STORIES) {
+            if (matchedNewStories.length === process.env.MAX_FILTER_STORIES) {
                 break;
             }
         }
@@ -145,7 +145,7 @@ function refreshStories(user, callback) {
             console.log("[ERROR] Forked worker failed to update news due to:", err)
         } else if (!result) {
             err = new Error("[ERROR] Forked worker failed to update news b/c User was not found");
-        } else if (result.ok != 1) {
+        } else if (result.ok !== 1) {
             console.log("[ERROR] Forked worker failed to update news for user: ", user._id);
             err = new Error("Forked child failed to update news for user");
         } else if (user.newsFilters.length > 0) {
@@ -178,13 +178,13 @@ function populateNews() {
                 body += data;
             });
             res.on('end', function() {
-                if (res.statusCode != 200) {
+                if (res.statusCode !== 200) {
                     console.log('[ERROR] Forked worker (%d) failed to fetch stories with keyword %s', res.statusCode, keyword);
                     return callback(new Error("Failed to fetch stories"));
                 }
                 try {
                     var response = JSON.parse(body);
-                    if (response.status != "ok") {
+                    if (response.status !== "ok") {
                         console.log("[ERROR] Forked worker failed to fetch stories due to", response.message);
                         return callback(new Error("Failed to fetch stories"));
                     }
@@ -206,7 +206,7 @@ function populateNews() {
             return;
         }
         var storyDocs = articles.map(story => getStoryDoc(story))
-                                .filter(story => story != null);
+                                .filter(story => story !== null);
         // remove duplicates
         var exists = new Set([]);
         var uniqueStoryDocs = [];
@@ -240,7 +240,7 @@ function populateNews() {
             } else if (!result) {
                 console.log('[ERROR] Forked worker failed to update for global story document');
                 console.log('[ERROR] Forked worker: global story document does not exists.');
-            } else if (result.ok != 1) {
+            } else if (result.ok !== 1) {
                 console.log('[ERROR] Forked worker failed to update for global story document');
             } else {
                 console.log('[INFO] Forked worker successfully populated news');
@@ -266,7 +266,7 @@ function refreshStoriesForAllUsers() {
                 refreshStories(user, function(err) {
                     return callback(err);
                 })
-            } else { // when user == null. we are done
+            } else { // when user === null. we are done
                 console.log("[INFO] Forked worker finished updating all Users.");
                 done = true;
                 return callback();
@@ -355,9 +355,9 @@ function getStoryDoc(story) {
     // sanity check
     if (!story ||
         !story.title ||
-        story.title.length == 0 ||
+        story.title.length === 0 ||
         !story.publishedAt ||
-        story.publishedAt.length == 0 ||
+        story.publishedAt.length === 0 ||
         !story.url ||
         !story.urlToImage) {
         return null;
