@@ -1,19 +1,17 @@
 language: node_js
+node_js:
+  - "10"
 env:
-  - MONGODB_CONNECT_URL="mongodb+srv://tugan0329:a7kFGhYkzTvRUWJG@newswatcher-cluster-86hjb.mongodb.net/newswatcherdb?retryWrites=true&w=majority"
-  - JWT_SECRET="smE3HAnT*WR@"
-  - NEWS_API_KEY="8c5c5ec963df487e9eb9aea784aba9da"
-  - MAX_SHARED_STORIES=30
-  - MAX_COMMENTS=30
-  - MAX_FILTER_STORIES=15
-  - PASSWORD_SALT_ROUNDS=10
-  - PORT=3000
-  - ADMIN_TOKEN="hemd*UTZ7UmM"
-  - STORY_UUID_NAMESPAE="bf9026e7-eafd-435f-b1c5-ae5cd6b6df27"
-  - MAX_GLOBAL_STORIES=300
-  - POPULATE_STORY_INTERVAL_HOURS=6
-  - DELETE_SHARED_STORY_INTERVAL_HOURS=15
-  - EXPIRE_DAYS=2
+  global:
+    - MAX_SHARED_STORIES=30
+    - MAX_COMMENTS=30
+    - MAX_FILTER_STORIES=15
+    - PASSWORD_SALT_ROUNDS=10
+    - PORT=3000
+    - MAX_GLOBAL_STORIES=300
+    - POPULATE_STORY_INTERVAL_HOURS=6
+    - DELETE_SHARED_STORY_INTERVAL_HOURS=15
+    - EXPIRE_DAYS=2
 install:
 - npm install
 - npm run build
