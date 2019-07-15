@@ -4,7 +4,8 @@ class Modal extends Component {
     render() {
         return (
             <div className="modal-instance" data-modal-id={this.props.modalID}>
-                <a className="modal-trigger" href="#">
+                <a className="modal-trigger" href="#"
+                   data-modal-id={this.props.modalID}>
                     { this.props.triggerText }
                 </a>
                 <div className="modal-container" data-modal-id={this.props.modalID}>
