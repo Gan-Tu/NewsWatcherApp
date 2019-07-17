@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { withCookies } from 'react-cookie'
+import { connect } from 'react-redux';
 import Bar from './Bar';
 import Footer from './Footer';
 import Navigation from './Navigation';
@@ -17,28 +18,29 @@ class App extends Component {
 
   componentDidMount() {
       fetch("/api/homeNews")
-          .then(res => {
-            if (!res.ok) {
-              throw res;
-            }
-            return res.json()
-          })
-          .then(data => {
-            this.setState({
-              stories: data,
-              totalPages: Math.ceil(data.length / this.state.newsPerPage)
-            });
-          })
-          .catch(err => {
-            console.log("Failed to fetch home new");
+        .then(res => {
+          if (!res.ok) {
+            throw res;
+          }
+          return res.json()
+        })
+        .then(data => {
+          this.setState({
+            stories: data,
+            totalPages: Math.ceil(data.length / this.state.newsPerPage)
           });
+        })
+        .catch(err => {
+          console.log("Failed to fetch home new");
+        });
   }
 
   render() {
     return (
       <div className="App">
         <Bar title="NewsWatcher | A sample app by Gan"
-             cookies={this.props.cookies}/>
+             cookies={this.props.cookies}
+             dispatch={this.props.dispatch} />
         <Navigation />
         <div className="main-container">
           <NewsListing stories={this.state.stories}
@@ -51,4 +53,10 @@ class App extends Component {
   }
 }
 
-export default withCookies(App);
+// const mapStateToProps = (state) => {
+//     return {
+//         displayName: state.session.displayName
+//     }
+// }
+
+export default connect()(withCookies(App));

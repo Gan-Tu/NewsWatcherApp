@@ -18,11 +18,11 @@ class LoginModal extends Component {
                     <form onSubmit={this.props.handleLogin}>
                       <div className="row">
                         <div className="col-md-12">
-                          <input type="email" placeholder="Email"
+                          <input type="email" placeholder="Email" required
                                  onChange={this.props.handleEmailChange} />
                         </div>
                         <div className="col-md-12">
-                          <input type="password" placeholder="Password"
+                          <input type="password" placeholder="Password" required
                                  onChange={this.props.handlePasswordChange} />
                         </div>
                         <div className="col-md-12">

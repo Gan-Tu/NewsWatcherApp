@@ -26,18 +26,50 @@ class SignupModal extends Component {
                     <p className="lead">
                       Get started by creating an account.
                     </p>
-                    <form onSubmit={this.handleSignup}>
+                    <form onSubmit={this.props.handleSignup}>
                         <div className="row">
                           {/* main signup form */}
                           <div className="col-12">
-                              <input  type="email"
-                                      name="email"
-                                      placeholder="Email Address" />
+                              <input  type="text" name="displayName" required
+                                      placeholder="Display Name"
+                                      onChange={this.props.handleNameChange} />
+                              {
+                                this.props.nameErrMsg ?
+                                  <div class="alert bg--error">
+                                    <div class="alert__body">
+                                      <span>Invalid name: {this.props.nameErrMsg} </span>
+                                    </div>
+                                  </div>
+                                : ""
+                              }
                           </div>
                           <div className="col-12">
-                              <input  type="password"
-                                      name="password"
-                                      placeholder="Password" />
+                              <input  type="email" name="email" required
+                                      placeholder="Email Address"
+                                      onChange={this.props.handleEmailChange} />
+                              {
+                                this.props.emailErrMsg ?
+                                  <div class="alert bg--error">
+                                    <div class="alert__body">
+                                      <span>Invalid email: {this.props.emailErrMsg} </span>
+                                    </div>
+                                  </div>
+                                : ""
+                              }
+                          </div>
+                          <div className="col-12">
+                              <input  type="password" name="password" required
+                                      placeholder="Password"
+                                      onChange={this.props.handlePasswordChange} />
+                              {
+                                this.props.passwordErrMsg ?
+                                  <div class="alert bg--error">
+                                    <div class="alert__body">
+                                      <span>Invalid password: {this.props.passwordErrMsg} </span>
+                                    </div>
+                                  </div>
+                                : ""
+                              }
                           </div>
                           <div className="col-12">
                               <button type="submit"
