@@ -44,12 +44,14 @@ app.enable('trust proxy');
 /** Middleware */
 
 // apply rate limits to all requests to avoid DOS/DDOS related attacks
-var limiter = new RateLimit({
-    windowsMs: 15*50*1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    delayMs: 0 // disable delaying - full speed until the max limit
-});
-app.use(limiter);
+if (process.env.NODE_ENV === 'production') {
+    var limiter = new RateLimit({
+        windowsMs: 15*50*1000, // 15 minutes
+        max: 100, // limit each IP to 100 requests per windowMs
+        delayMs: 0 // disable delaying - full speed until the max limit
+    });
+    app.use(limiter);
+}
 
 // HTTP application hack mitigations
 app.use(helmet());
@@ -66,10 +68,12 @@ app.use(csp({
                     ],
         styleSrc:   ["'self'",
                      "'unsafe-inline'",
-                     'maxcdn.bootstrapcdn.com'
+                     'maxcdn.bootstrapcdn.com',
+                     "https://fonts.googleapis.com"
                     ],
         fontSrc:    ["'self'",
-                     'maxcdn.bootstrapcdn.com'
+                     'maxcdn.bootstrapcdn.com',
+                     "https://fonts.gstatic.com"
                     ],
         imgSrc:     ['*']
     }
