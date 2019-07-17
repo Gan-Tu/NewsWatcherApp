@@ -18,10 +18,12 @@ class LoginModal extends Component {
                     <form onSubmit={this.props.handleLogin}>
                       <div className="row">
                         <div className="col-md-12">
-                          <input type="text" placeholder="User Name" />
+                          <input type="email" placeholder="Email"
+                                 onChange={this.props.handleEmailChange} />
                         </div>
                         <div className="col-md-12">
-                          <input type="password" placeholder="Password" />
+                          <input type="password" placeholder="Password"
+                                 onChange={this.props.handlePasswordChange} />
                         </div>
                         <div className="col-md-12">
                           <button className="btn btn--primary type--uppercase" type="submit">
