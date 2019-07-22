@@ -7,8 +7,7 @@ class NewsListing extends Component {
   constructor(props) {
       super(props);
       this.state = {
-        page: 1,
-        renderFooter: false
+        page: 1
       };
   }
 
@@ -35,7 +34,6 @@ class NewsListing extends Component {
                   { stories }
               </div>
               <Pagination start={1}
-                          dataLoaded={ this.props.dataLoaded }
                           end={ this.props.totalPages }
                           current={this.state.page}
                           handleChangePage={ this.handleChangePage }/>
