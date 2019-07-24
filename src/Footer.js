@@ -9,7 +9,7 @@ class Footer extends Component {
                 <div className="container">
                     <div className="row">
                         <div className="col-md-6">
-                            <img alt="Image" className="logo" src={ LOGO_PATHS["dark"] } />
+                            <img alt="logo" className="logo" src={ LOGO_PATHS["dark"] } />
                             <ul className="list-inline list--hover">
                                 <li className="list-inline-item">
                                     <a href="#">

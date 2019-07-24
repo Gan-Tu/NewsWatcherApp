@@ -15,7 +15,7 @@ class SignupModal extends Component {
           {/* picture of signup form */}
           <div className="imageblock__content col-lg-5 col-md-5 pos-left">
             <div className="background-image-holder">
-              <img src={this.props.sideImg} />
+              <img alt="signup cover" src={this.props.sideImg} />
             </div>
           </div>
           <div className="container">

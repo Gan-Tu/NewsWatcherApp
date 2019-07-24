@@ -11,7 +11,7 @@ class NewsBox extends Component {
                 <article className="feature feature-1">
                     <a href={ this.props.story.link }
                        className="block">
-                        <img src={ this.props.story.imageUrl } />
+                        <img alt="story cover" src={ this.props.story.imageUrl } />
                     </a>
                     <div className="feature__body boxed boxed--border">
                         <span>{ date }</span>
